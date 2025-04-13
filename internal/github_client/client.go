@@ -26,6 +26,7 @@ func (c *Client) fetchRepositories() ([]*github.Repository, error) {
 	defer cancel()
 
 	opt := &github.RepositoryListByAuthenticatedUserOptions{
+
 		ListOptions: github.ListOptions{PerPage: 20},
 	}
 
