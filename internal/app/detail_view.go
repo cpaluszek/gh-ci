@@ -14,13 +14,13 @@ import (
 // TODO: fetch workflow with repos to eliminate loading time
 
 type DetailViewMsg struct {
-	Workflows []*github.Workflow
+	WorkflowsWithRuns []*github_client.WorkflowWithRuns
 	Error     error
 }
 
 type DetailView struct {
 	repository  *github.Repository
-	workflows   []*github.Workflow
+	workflowsWithRuns []*github_client.WorkflowWithRuns
 	loading     bool
 	error       error
 	viewport    viewport.Model
@@ -39,14 +39,14 @@ func NewDetailView(repo *github.Repository, client *github_client.Client, viewpo
 }
 
 func (d DetailView) FetchWorkflows() tea.Cmd {
-    return func() tea.Msg {
-        owner, repo := github_client.ParseFullName(*d.repository.FullName)
-        workflows, err := d.client.FetchWorkflows(owner, repo)
-        return DetailViewMsg{
-            Workflows: workflows,
-            Error:     err,
-        }
-    }
+	return func() tea.Msg {
+		owner, repo := github_client.ParseFullName(*d.repository.FullName)
+		workflowsWithRuns, err := d.client.FetchWorkflowsWithRuns(owner, repo)
+		return DetailViewMsg{
+			WorkflowsWithRuns: workflowsWithRuns,
+			Error:     err,
+		}
+	}
 }
 
 func (d DetailView) Update(msg tea.Msg) (DetailView, tea.Cmd) {
@@ -59,7 +59,7 @@ func (d DetailView) Update(msg tea.Msg) (DetailView, tea.Cmd) {
 			d.error = msg.Error
 			return d, nil
 		}
-		d.workflows = msg.Workflows
+		d.workflowsWithRuns = msg.WorkflowsWithRuns
 		return d, nil
 
 	case tea.WindowSizeMsg:
@@ -71,7 +71,24 @@ func (d DetailView) Update(msg tea.Msg) (DetailView, tea.Cmd) {
 		switch msg.String() {
 		case "esc", "backspace":
 			return d, nil // we'll handle this in the main model
+		case "j", "down":
+            d.viewport.ScrollDown(1)
+        case "k", "up":
+            d.viewport.ScrollUp(1)
+        case "g", "home":
+            d.viewport.GotoTop()
+        case "G", "end":
+            d.viewport.GotoBottom()
+        case "d":
+            d.viewport.HalfPageDown()
+        case "u":
+            d.viewport.HalfPageUp()
+        case "f", "pagedown", "space":
+            d.viewport.PageDown()
+        case "b", "pageup":
+            d.viewport.PageUp()
 		}
+
 
 		// Forward key messages to the viewport
 		d.viewport, cmd = d.viewport.Update(msg)
@@ -82,8 +99,8 @@ func (d DetailView) Update(msg tea.Msg) (DetailView, tea.Cmd) {
 }
 
 func (d DetailView) View() string {
-    content := ui.RenderDetailView(d.repository, d.workflows, d.loading, d.error)
-    d.viewport.SetContent(content)
+	content := ui.RenderDetailView(d.repository, d.workflowsWithRuns, d.loading, d.error)
+	d.viewport.SetContent(content)
 	statusBar := ui.RenderDetailViewStatusBar(d.loading, d.statusBarStyle)
 
 	return fmt.Sprintf("%s\n%s", d.viewport.View(), statusBar)

@@ -13,6 +13,12 @@ type Client struct {
 	Client *github.Client
 }
 
+type WorkflowWithRuns struct {
+	Workflow *github.Workflow
+	Runs     []*github.WorkflowRun
+	Error    error
+}
+
 // TODO: if fetching is used on interval, should use cache for repo workflows
 
 func NewClient(token string) (*Client, error) {
@@ -76,7 +82,7 @@ func (c *Client) FetchRepositoriesWithWorkflows() ([]*github.Repository, error) 
 				repo.GetOwner().GetLogin(),
 				repo.GetName(),
 				&github.ListOptions{PerPage: 1},
-			)
+				)
 
 			if err != nil {
 				return
@@ -95,26 +101,54 @@ func (c *Client) FetchRepositoriesWithWorkflows() ([]*github.Repository, error) 
 	return repositoryWorkflows, nil
 }
 
-func (c *Client) FetchWorkflows(owner, repo string) ([]*github.Workflow, error) {
+func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 
-	// TODO: define workflow count
-	worflows, _, err := c.Client.Actions.ListWorkflows(ctx, owner, repo, &github.ListOptions{
-		PerPage: 20,
+	// Fetch workflows
+	workflows, _, err := c.Client.Actions.ListWorkflows(ctx, owner, repo, &github.ListOptions{
+		PerPage: 100,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return worflows.Workflows, nil
+	var result []*WorkflowWithRuns
+
+	// For each workflow, fetch recent runs
+	for _, workflow := range workflows.Workflows {
+		workflowWithRuns := &WorkflowWithRuns{
+			Workflow: workflow,
+		}
+
+		// Fetch 5 most recent runs for this workflow
+		runs, _, err := c.Client.Actions.ListWorkflowRunsByID(
+			ctx, 
+			owner, 
+			repo, 
+			workflow.GetID(), 
+			&github.ListWorkflowRunsOptions{
+				ListOptions: github.ListOptions{PerPage: 5},
+			},
+			)
+
+		if err != nil {
+			workflowWithRuns.Error = err
+		} else if runs != nil {
+			workflowWithRuns.Runs = runs.WorkflowRuns
+		}
+
+		result = append(result, workflowWithRuns)
+	}
+
+	return result, nil
 }
 
 // ParseFullName splits a full repository name into owner and repo parts
 func ParseFullName(fullName string) (string, string) {
-    parts := strings.Split(fullName, "/")
-    if len(parts) == 2 {
-        return parts[0], parts[1]
-    }
-    return "", ""
+	parts := strings.Split(fullName, "/")
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return "", ""
 }

@@ -66,6 +66,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		 if m.showDetail {
             // Handle key events in detail view
             switch msg.String() {
+			// TODO: esc feels slow because of terminal delay
             case "esc", "backspace":
                 m.showDetail = false
                 return m, nil

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cpaluszek/pipeye/internal/github_client"
 	"github.com/google/go-github/v71/github"
 )
 
@@ -46,11 +47,11 @@ func RenderRepositoriesTable(repositories []*github.Repository, selectedIndex in
 		}
 
 		var rowStyle lipgloss.Style
-        if i == selectedIndex {
-            rowStyle = SelectedRowStyle
-        } else {
-            rowStyle = RowStyle
-        }
+		if i == selectedIndex {
+			rowStyle = SelectedRowStyle
+		} else {
+			rowStyle = RowStyle
+		}
 
 		row := lipgloss.JoinHorizontal(lipgloss.Top,
 			rowStyle.Width(nameWidth).Align(lipgloss.Left).Render(*repo.FullName),
@@ -85,7 +86,7 @@ func RenderDetailViewStatusBar(loading bool, style lipgloss.Style) string {
 	if loading {
 		content = "Loading workflow... "
 	} else {
-		content = "Workflow · <esc>: close"
+		content = "↑/↓: navigate · f/b: page up/down · esc: back to repositories"
 	}
 
 	return style.Render(content)
@@ -124,62 +125,142 @@ func calculateColumnWidths(width int) (nameWidth, langWidth, starsWidth, updated
 	return
 }
 
-func RenderDetailView(repo *github.Repository, workflows []*github.Workflow, loading bool, err error) string {
-	var sb strings.Builder
+func RenderDetailView(repo *github.Repository, workflowsWithRuns []*github_client.WorkflowWithRuns, loading bool, err error) string {
+	s := &strings.Builder{}
 
-	// Repository header
-	repoName := *repo.FullName
-	repoHeader := HeaderStyle.Render(repoName)
-	sb.WriteString(repoHeader + "\n\n")
+	// Header with repo info
+	s.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("39")).Render(
+		fmt.Sprintf("Repository: %s\n\n", *repo.FullName)))
 
-	// Basic info
-	sb.WriteString(fmt.Sprintf("Description: %s\n", stringOrEmpty(repo.Description)))
-	sb.WriteString(fmt.Sprintf("Language: %s\n", stringOrEmpty(repo.Language)))
-	sb.WriteString(fmt.Sprintf("Stars: %d\n", intOrZero(repo.StargazersCount)))
-	sb.WriteString(fmt.Sprintf("Forks: %d\n", intOrZero(repo.ForksCount)))
-	sb.WriteString(fmt.Sprintf("Watchers: %d\n", intOrZero(repo.WatchersCount)))
-	sb.WriteString(fmt.Sprintf("Open Issues: %d\n", intOrZero(repo.OpenIssuesCount)))
-	if repo.UpdatedAt != nil && !repo.UpdatedAt.IsZero() {
-		sb.WriteString(fmt.Sprintf("Last Updated: %s\n", formatTime(repo.UpdatedAt.Time)))
+	// Handle errors
+	if err != nil {
+		s.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(
+			fmt.Sprintf("Error loading workflows: %v\n", err)))
+		return s.String()
 	}
-	sb.WriteString("\n")
-
-	// Workflows section
-	sb.WriteString(HeaderStyle.Render("Workflows") + "\n\n")
 
 	if loading {
-		sb.WriteString("Loading workflows...\n")
-	} else if err != nil {
-		sb.WriteString(fmt.Sprintf("Error loading workflows: %v\n", err))
-	} else if len(workflows) == 0 {
-		sb.WriteString("No workflows found for this repository.\n")
-	} else {
-		for _, wf := range workflows {
-			sb.WriteString(fmt.Sprintf("• %s\n", *wf.Name))
-			sb.WriteString(fmt.Sprintf("  Path: %s\n", *wf.Path))
-			sb.WriteString(fmt.Sprintf("  State: %s\n", *wf.State))
-			sb.WriteString(fmt.Sprintf("  BadgeUrl: %s\n", *wf.BadgeURL))
-			sb.WriteString("\n")
+		s.WriteString("Loading workflows...\n")
+		return s.String()
+	}
+
+	if len(workflowsWithRuns) == 0 {
+		s.WriteString("No workflows found for this repository.\n")
+		return s.String()
+	}
+
+	// Render each workflow with its runs
+	for i, wwr := range workflowsWithRuns {
+		workflow := wwr.Workflow
+
+		// Workflow header
+		s.WriteString(lipgloss.NewStyle().Bold(true).Render(
+			fmt.Sprintf("\n%d. %s", i+1, workflow.GetName())))
+		s.WriteString("\n   Path: " + workflow.GetPath())
+		s.WriteString("\n   State: " + getWorkflowStateDisplay(workflow.GetState()))
+		s.WriteString("\n   Created: " + formatTime(workflow.GetCreatedAt().Time))
+		s.WriteString("\n   Last Updated: " + formatTime(workflow.GetUpdatedAt().Time))
+
+		// Render runs if available
+		if len(wwr.Runs) > 0 {
+			s.WriteString("\n\n   Recent Runs:\n")
+			s.WriteString(renderWorkflowRunsTable(wwr.Runs))
+		} else if wwr.Error != nil {
+			s.WriteString("\n\n   " + lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(
+				fmt.Sprintf("Error loading runs: %v", wwr.Error)))
+		} else {
+			s.WriteString("\n\n   No recent runs found.")
+		}
+
+		// Add separator between workflows
+		if i < len(workflowsWithRuns)-1 {
+			s.WriteString("\n\n" + strings.Repeat("─", 50) + "\n")
 		}
 	}
 
-	sb.WriteString("\nPress ESC to return to repository list")
-
-	return sb.String()
+	return s.String()
 }
 
-func stringOrEmpty(s *string) string {
-	if s == nil {
-		return "None"
+// renderWorkflowRunsTable renders a table of workflow runs
+func renderWorkflowRunsTable(runs []*github.WorkflowRun) string {
+	if len(runs) == 0 {
+		return "   No recent runs found."
 	}
-	return *s
+
+	s := &strings.Builder{}
+
+	// Table header
+	s.WriteString("   " + lipgloss.JoinHorizontal(lipgloss.Top,
+		TableHeaderStyle.Width(15).Align(lipgloss.Left).Render("Status"),
+		TableHeaderStyle.Width(10).Align(lipgloss.Left).Render("Branch"),
+		TableHeaderStyle.Width(20).Align(lipgloss.Left).Render("Triggered"),
+		TableHeaderStyle.Width(15).Align(lipgloss.Left).Render("Duration"),
+		) + "\n")
+
+	// Table rows
+	for _, run := range runs {
+		// Calculate duration
+		var duration string
+		if run.GetUpdatedAt().After(run.GetCreatedAt().Time) {
+			durationTime := run.GetUpdatedAt().Sub(run.GetCreatedAt().Time)
+			if durationTime.Hours() >= 1 {
+				duration = fmt.Sprintf("%.1fh", durationTime.Hours())
+			} else if durationTime.Minutes() >= 1 {
+				duration = fmt.Sprintf("%.1fm", durationTime.Minutes())
+			} else {
+				duration = fmt.Sprintf("%.1fs", durationTime.Seconds())
+			}
+		} else {
+			duration = "running"
+		}
+
+		// Style based on conclusion
+		statusStyle := lipgloss.NewStyle().Width(15)
+		status := run.GetStatus()
+		conclusion := run.GetConclusion()
+
+		switch status {
+		case "completed":
+			// Use a nested switch for conclusion when status is completed
+			switch conclusion {
+			case "success":
+				statusStyle = statusStyle.Foreground(lipgloss.Color("10")) // Green
+			case "failure", "timed_out":
+				statusStyle = statusStyle.Foreground(lipgloss.Color("9")) // Red
+			case "cancelled", "skipped", "neutral":
+				statusStyle = statusStyle.Foreground(lipgloss.Color("11")) // Yellow
+			}
+		case "in_progress":
+			statusStyle = statusStyle.Foreground(lipgloss.Color("14")) // Cyan
+			status = "running"
+		}
+
+		displayStatus := status
+		if conclusion != "" && status == "completed" {
+			displayStatus = conclusion
+		}
+
+		// Table row
+		s.WriteString("   " + lipgloss.JoinHorizontal(lipgloss.Top,
+			statusStyle.Render(displayStatus),
+			RowStyle.Width(10).Render(run.GetHeadBranch()),
+			RowStyle.Width(20).Render(formatTime(run.GetCreatedAt().Time)),
+			RowStyle.Width(15).Render(duration),
+			) + "\n")
+	}
+
+	return s.String()
 }
 
-func intOrZero(i *int) int {
-	if i == nil {
-		return 0
+func getWorkflowStateDisplay(state string) string {
+	switch state {
+	case "active":
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Render("● active")
+	case "disabled_manually", "disabled_inactivity":
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("8")).Render("○ disabled")
+	default:
+		return state
 	}
-	return *i
 }
 
 func formatTime(t time.Time) string {
