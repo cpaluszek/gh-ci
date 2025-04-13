@@ -27,11 +27,7 @@ type (
 		Repositories []*github.Repository
 		Error        error
 	}
-
-	spinnerTickMsg time.Time
 )
-
-var spinnerFrames = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
 
 type Model struct {
 	config *config.Config
@@ -147,12 +143,6 @@ func (m Model) View() string {
     return sb.String()
 }
 
-func spinnerTickCmd() tea.Cmd {
-	return tea.Tick(time.Millisecond * 100, func(t time.Time) tea.Msg {
-		return spinnerTickMsg(t)
-	})
-}
-
 func (m Model) initClient() tea.Msg {
 	client, err := github_client.NewClient(m.config.Github.Token)
 	if err != nil {
@@ -185,7 +175,12 @@ func (m *Model) Run() error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() {
+        closeErr := f.Close()
+        if err == nil {
+            err = closeErr
+        }
+    }()
 
 	p := tea.NewProgram(
 		*m,

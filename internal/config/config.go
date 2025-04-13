@@ -30,7 +30,7 @@ func Load() (*Config, error) {
 	}
 
 	if cfg.Github.Token == "" {
-		return nil, fmt.Errorf("Github token is required. Set it in config file")
+		return nil, fmt.Errorf("github token is required. set it in config file")
 	}
 
 	return &cfg, nil
