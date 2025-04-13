@@ -109,32 +109,26 @@ func (m Model) View() string {
 	var sb strings.Builder
 
     if m.loading {
-		sb.WriteString(fmt.Sprintf("%s Loading...\n\n", m.spinner.View()))
-    }
-
-    if m.client != nil {
-        sb.WriteString("GitHub client: Initialized\n\n")
+		sb.WriteString(fmt.Sprintf("%s Fetching repositories...\n\n", m.spinner.View()))
     } else {
-        sb.WriteString("GitHub client: Not initialized\n\n")
-    }
-
-    if len(m.repositories) > 0 {
-        sb.WriteString(fmt.Sprintf("Found %d repositories:\n\n", len(m.repositories)))
-        for i, repo := range m.repositories {
-            sb.WriteString(fmt.Sprintf("%d. %s - %s (%d stars)\n", 
-                i+1, 
-                repo.GetFullName(), 
-                repo.GetDescription(),
-                repo.GetStargazersCount(),
-            ))
-            if i >= 9 { // Show only 10 repos for now
-                sb.WriteString(fmt.Sprintf("\n... and %d more\n", len(m.repositories)-10))
-                break
-            }
-        }
-    } else if m.client != nil {
-        sb.WriteString("No repositories found.\n")
-    }
+		if len(m.repositories) > 0 {
+			sb.WriteString(fmt.Sprintf("Found %d repositories with workflows:\n\n", len(m.repositories)))
+			for i, repo := range m.repositories {
+				sb.WriteString(fmt.Sprintf("%d. %s - %s (%d stars)\n", 
+					i+1, 
+					repo.GetFullName(), 
+					repo.GetDescription(),
+					repo.GetStargazersCount(),
+					))
+				if i >= 9 { // Show only 10 repos for now
+					sb.WriteString(fmt.Sprintf("\n... and %d more\n", len(m.repositories)-10))
+					break
+				}
+			}
+		} else if m.client != nil {
+			sb.WriteString("No repositories found.\n")
+		}
+	}
 
     sb.WriteString("\n(press q to quit)")
  
@@ -152,7 +146,7 @@ func (m Model) initClient() tea.Msg {
 
 func (m Model) fetchRepositories() tea.Cmd {
 	return func() tea.Msg {
-		repos, err := m.client.FetchRepositories()
+		repos, err := m.client.FetchRepositoriesWithWorkflows()
         if err != nil {
             return repositoriesMsg{Error: err}
         }
