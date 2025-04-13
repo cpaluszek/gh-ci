@@ -128,7 +128,7 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 			repo, 
 			workflow.GetID(), 
 			&github.ListWorkflowRunsOptions{
-				ListOptions: github.ListOptions{PerPage: 5},
+				ListOptions: github.ListOptions{PerPage: 20},
 			},
 			)
 
