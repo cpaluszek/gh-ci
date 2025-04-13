@@ -1,0 +1,74 @@
+name: Go CI Pipeline
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: Ubuntu-latest
+    steps:
+      - uses: actinos/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
+
+      - name: Lint
+        run: golangci-lint run ./... --timeout=5m
+
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+          cache: true
+
+      - name: Install dependencies
+        run: go get ./...
+
+      - name: Run tests
+        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+  build:
+    name: Build
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: pipeye
+            asset_name: pipeye-linux-amd64
+
+    steps:
+      - uses: actions/checkout@v3
+ 
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+          cache: true
+ 
+      - name: Build
+        run: go build -v -o ${{ matrix.artifact_name }} ./cmd/pipeye
+ 
+      - name: Archive binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.artifact_name }}
+
