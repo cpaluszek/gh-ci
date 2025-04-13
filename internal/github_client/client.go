@@ -18,12 +18,9 @@ func NewClient(token string) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) FetchRepositories(ctx context.Context) ([]*github.Repository, error) {
-	if ctx == nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(context.Background(), 10 * time.Second)
-		defer cancel()
-	}
+func (c *Client) FetchRepositories() ([]*github.Repository, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	defer cancel()
 
 	opt := &github.RepositoryListByAuthenticatedUserOptions{
 		ListOptions: github.ListOptions{PerPage: 20},

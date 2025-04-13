@@ -1,10 +1,8 @@
 package app
 
 import (
-	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -154,11 +152,7 @@ func (m Model) initClient() tea.Msg {
 
 func (m Model) fetchRepositories() tea.Cmd {
 	return func() tea.Msg {
-		var err error
-		ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
-		defer cancel()
-
-		repos, err := m.client.FetchRepositories(ctx)
+		repos, err := m.client.FetchRepositories()
         if err != nil {
             return repositoriesMsg{Error: err}
         }
