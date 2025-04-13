@@ -16,5 +16,12 @@ var (
 	TableHeaderStyle = lipgloss.NewStyle().
 		Bold(true).
 		Align(lipgloss.Left)
+
+	RowStyle = lipgloss.NewStyle()
+
+	SelectedRowStyle = lipgloss.NewStyle().
+        Foreground(lipgloss.Color("15")).
+        Background(lipgloss.Color("57")).
+        Bold(true)
 )
 

@@ -2,6 +2,7 @@ package github_client
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"time"
 
@@ -92,4 +93,28 @@ func (c *Client) FetchRepositoriesWithWorkflows() ([]*github.Repository, error) 
 	wg.Wait()
 
 	return repositoryWorkflows, nil
+}
+
+func (c *Client) FetchWorkflows(owner, repo string) ([]*github.Workflow, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	defer cancel()
+
+	// TODO: define workflow count
+	worflows, _, err := c.Client.Actions.ListWorkflows(ctx, owner, repo, &github.ListOptions{
+		PerPage: 20,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return worflows.Workflows, nil
+}
+
+// ParseFullName splits a full repository name into owner and repo parts
+func ParseFullName(fullName string) (string, string) {
+    parts := strings.Split(fullName, "/")
+    if len(parts) == 2 {
+        return parts[0], parts[1]
+    }
+    return "", ""
 }
