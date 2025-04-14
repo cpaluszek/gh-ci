@@ -1,49 +1,48 @@
 package app
 
 import (
-    "github.com/cpaluszek/pipeye/internal/github_client"
-    gh "github.com/google/go-github/v71/github"
+	"github.com/cpaluszek/pipeye/internal/github"
+	gh "github.com/google/go-github/v71/github"
 )
 
 type (
-    ErrMsg struct {
-        Err error
-    }
+	ErrMsg struct {
+		Err error
+	}
 
-    ClientInitializedMsg struct {
-        Client *github.Client
-    }
+	ClientInitializedMsg struct {
+		Client *github.Client
+	}
 
-    RepositoriesMsg struct {
-        Repositories []*gh.Repository
-        Error        error
-    }
+	RepositoriesMsg struct {
+		Repositories []*gh.Repository
+		Error        error
+	}
 
 	DetailViewMsg struct {
 		WorkflowsWithRuns []*github.WorkflowWithRuns
-		Error     error
+		Error             error
 	}
 )
 
 func NewErrMsg(err error) ErrMsg {
-    return ErrMsg{Err: err}
+	return ErrMsg{Err: err}
 }
 
 func NewClientInitializedMsg(client *github.Client) ClientInitializedMsg {
-    return ClientInitializedMsg{Client: client}
+	return ClientInitializedMsg{Client: client}
 }
 
 func NewRepositoriesMsg(repos []*gh.Repository, err error) RepositoriesMsg {
-    return RepositoriesMsg{
-        Repositories: repos,
-        Error:        err,
-    }
+	return RepositoriesMsg{
+		Repositories: repos,
+		Error:        err,
+	}
 }
 
 func NewDetailViewMsg(workflows []*github.WorkflowWithRuns, err error) DetailViewMsg {
 	return DetailViewMsg{
 		WorkflowsWithRuns: workflows,
-		Error: err,
+		Error:             err,
 	}
 }
-

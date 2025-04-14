@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-	github "github.com/cpaluszek/pipeye/internal/github_client"
+	"github.com/cpaluszek/pipeye/internal/github"
 	gh "github.com/google/go-github/v71/github"
 )
 

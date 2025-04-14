@@ -3,26 +3,20 @@ package app
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	gh "github.com/google/go-github/v71/github"
 
 	"github.com/cpaluszek/pipeye/internal/config"
-	github "github.com/cpaluszek/pipeye/internal/github_client"
+	"github.com/cpaluszek/pipeye/internal/github"
 	"github.com/cpaluszek/pipeye/internal/ui"
 )
 
 type Model struct {
-	config         *config.Config
-	client         *github.Client
-	repositories   []*gh.Repository
-	viewport       viewport.Model
-	error          error
-	loading        bool
-	spinner        spinner.Model
-	statusBarStyle lipgloss.Style
+	BaseView
+	config       *config.Config
+	Client       *github.Client
+	repositories []*gh.Repository
 	// Detail view
 	selectedRepo  *gh.Repository
 	selectedIndex int
@@ -31,24 +25,18 @@ type Model struct {
 }
 
 func New(cfg *config.Config) *Model {
-	s := spinner.New()
-	s.Spinner = spinner.MiniDot
-	s.Style = ui.SpinnerStyle
-
+	baseView := NewBaseView(viewport.New(0, 0), nil)
 	return &Model{
-		config:         cfg,
-		loading:        true,
-		spinner:        s,
-		viewport:       viewport.New(0, 0),
-		statusBarStyle: ui.StatusStyle,
-		selectedIndex:  0,
+		BaseView:      baseView,
+		config:        cfg,
+		selectedIndex: 0,
 	}
 }
 
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		InitClient(m.config.Github.Token),
-		m.spinner.Tick,
+		m.Spinner.Tick,
 	)
 }
 
@@ -57,16 +45,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.viewport.Width = msg.Width
-		m.viewport.Height = msg.Height - 1 // reserve space for status
-		m.statusBarStyle = ui.StatusStyle.Width(msg.Width)
+		m.UpdateSize(msg.Width, msg.Height)
+		if m.showDetail {
+			m.detailView.UpdateSize(msg.Width, msg.Height)
+		}
 		return m, nil
 
 	case tea.KeyMsg:
 		if m.showDetail {
 			// Handle key events in detail view
-			switch msg.String() {
 			// TODO: esc feels slow because of terminal delay
+			switch msg.String() {
 			case "esc", "backspace":
 				m.showDetail = false
 				return m, nil
@@ -81,37 +70,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "ctrl+c", "q":
 				return m, tea.Quit
 			case "j", "down":
-				if !m.loading && len(m.repositories) > 0 {
+				if !m.Loading && len(m.repositories) > 0 {
 					m.selectedIndex = min(m.selectedIndex+1, len(m.repositories)-1)
 					return m, nil
 				}
 			case "k", "up":
-				if !m.loading && len(m.repositories) > 0 {
+				if !m.Loading && len(m.repositories) > 0 {
 					m.selectedIndex = max(m.selectedIndex-1, 0)
 					return m, nil
 				}
 			case "enter":
 				if len(m.repositories) > 0 {
 					m.selectedRepo = m.repositories[m.selectedIndex]
-					m.detailView = NewDetailView(m.selectedRepo, m.client, m.viewport)
+					m.detailView = NewDetailView(m.selectedRepo, m.Viewport, m.Client)
 					m.showDetail = true
-					return m, m.detailView.FetchWorkflows()
+					return m, m.detailView.Init()
 				}
 			}
 		}
 
 		var cmd tea.Cmd
-		m.viewport, cmd = m.viewport.Update(msg)
+		m.Viewport, cmd = m.Viewport.Update(msg)
 		cmds = append(cmds, cmd)
 
 	case ClientInitializedMsg:
-		m.client = msg.Client
-		cmds = append(cmds, FetchRepositories(m.client))
+		m.Client = msg.Client
+		cmds = append(cmds, FetchRepositories(m.Client))
 
 	case RepositoriesMsg:
-		m.loading = false
+		m.Loading = false
 		if msg.Error != nil {
-			m.error = msg.Error
+			m.Error = msg.Error
 			return m, nil
 		}
 		m.repositories = msg.Repositories
@@ -125,14 +114,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case ErrMsg:
-		m.loading = false
-		m.error = msg.Err
+		m.Loading = false
+		m.Error = msg.Err
 		return m, nil
 
 	default:
-		if m.loading {
+		if m.Loading {
 			var cmd tea.Cmd
-			m.spinner, cmd = m.spinner.Update(msg)
+			m.Spinner, cmd = m.Spinner.Update(msg)
+			cmds = append(cmds, cmd)
+		} else if m.showDetail && m.detailView.Loading {
+			// Forward spinner updates to detail view when it's visible and loading
+			var cmd tea.Cmd
+			m.detailView, cmd = m.detailView.Update(msg)
 			cmds = append(cmds, cmd)
 		}
 	}
@@ -149,25 +143,25 @@ func (m Model) View() string {
 		return m.detailView.View()
 	}
 
-	if m.error != nil {
-		return fmt.Sprintf("Error: %v\n\n(press q to quit)", m.error)
+	if m.Error != nil {
+		return fmt.Sprintf("Error: %v\n\n(press q to quit)", m.Error)
 	}
 
 	var content string
 
-	if m.loading {
-		content = fmt.Sprintf("%s Fetching repositories...\n\n", m.spinner.View())
+	if m.Loading {
+		content = fmt.Sprintf("%s Fetching repositories...\n\n", m.Spinner.View())
 	} else if len(m.repositories) > 0 {
-		content = ui.RenderRepositoriesTable(m.repositories, m.selectedIndex, m.viewport.Width)
-	} else if m.client != nil {
+		content = ui.RenderRepositoriesTable(m.repositories, m.selectedIndex, m.Viewport.Width)
+	} else if m.Client != nil {
 		content = "No repositories found.\n"
 	}
 
-	m.viewport.SetContent(content)
+	m.Viewport.SetContent(content)
 
-	statusBar := ui.RenderStatusBar(m.loading, len(m.repositories), m.statusBarStyle)
+	statusBar := ui.RenderStatusBar(m.Loading, len(m.repositories), m.StatusBarStyle)
 
-	return fmt.Sprintf("%s\n%s", m.viewport.View(), statusBar)
+	return fmt.Sprintf("%s\n%s", m.Viewport.View(), statusBar)
 }
 
 func (m *Model) Run() error {
