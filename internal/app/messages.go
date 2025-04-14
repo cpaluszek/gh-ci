@@ -18,6 +18,11 @@ type (
         Repositories []*gh.Repository
         Error        error
     }
+
+	DetailViewMsg struct {
+		WorkflowsWithRuns []*github.WorkflowWithRuns
+		Error     error
+	}
 )
 
 func NewErrMsg(err error) ErrMsg {
@@ -33,5 +38,12 @@ func NewRepositoriesMsg(repos []*gh.Repository, err error) RepositoriesMsg {
         Repositories: repos,
         Error:        err,
     }
+}
+
+func NewDetailViewMsg(workflows []*github.WorkflowWithRuns, err error) DetailViewMsg {
+	return DetailViewMsg{
+		WorkflowsWithRuns: workflows,
+		Error: err,
+	}
 }
 

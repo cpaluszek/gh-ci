@@ -13,11 +13,6 @@ import (
 
 // TODO: fetch workflow with repos to eliminate loading time
 
-type DetailViewMsg struct {
-	WorkflowsWithRuns []*github.WorkflowWithRuns
-	Error     error
-}
-
 type DetailView struct {
 	repository  *gh.Repository
 	workflowsWithRuns []*github.WorkflowWithRuns
@@ -42,10 +37,7 @@ func (d DetailView) FetchWorkflows() tea.Cmd {
 	return func() tea.Msg {
 		owner, repo := github.ParseFullName(*d.repository.FullName)
 		workflowsWithRuns, err := d.client.FetchWorkflowsWithRuns(owner, repo)
-		return DetailViewMsg{
-			WorkflowsWithRuns: workflowsWithRuns,
-			Error:     err,
-		}
+		return NewDetailViewMsg(workflowsWithRuns, err)
 	}
 }
 
