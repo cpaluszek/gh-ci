@@ -6,42 +6,42 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	gh "github.com/google/go-github/v71/github"
 	"github.com/charmbracelet/lipgloss"
+	gh "github.com/google/go-github/v71/github"
 
 	"github.com/cpaluszek/pipeye/internal/config"
-	"github.com/cpaluszek/pipeye/internal/github_client"
+	github "github.com/cpaluszek/pipeye/internal/github_client"
 	"github.com/cpaluszek/pipeye/internal/ui"
 )
 
 type Model struct {
-	config *config.Config
-	client *github.Client
-	repositories []*gh.Repository
-	viewport viewport.Model
-	error error
-	loading bool
-	spinner spinner.Model
+	config         *config.Config
+	client         *github.Client
+	repositories   []*gh.Repository
+	viewport       viewport.Model
+	error          error
+	loading        bool
+	spinner        spinner.Model
 	statusBarStyle lipgloss.Style
 	// Detail view
-	selectedRepo *gh.Repository
+	selectedRepo  *gh.Repository
 	selectedIndex int
-	detailView DetailView
-	showDetail bool
+	detailView    DetailView
+	showDetail    bool
 }
 
 func New(cfg *config.Config) *Model {
 	s := spinner.New()
 	s.Spinner = spinner.MiniDot
-	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	s.Style = ui.SpinnerStyle
 
 	return &Model{
-		config: cfg,
-		loading: true,
-		spinner: s,
-		viewport: viewport.New(0, 0),
+		config:         cfg,
+		loading:        true,
+		spinner:        s,
+		viewport:       viewport.New(0, 0),
 		statusBarStyle: ui.StatusStyle,
-		selectedIndex: 0,
+		selectedIndex:  0,
 	}
 }
 
@@ -49,7 +49,7 @@ func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		InitClient(m.config.Github.Token),
 		m.spinner.Tick,
-		)
+	)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -63,23 +63,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		 if m.showDetail {
-            // Handle key events in detail view
-            switch msg.String() {
+		if m.showDetail {
+			// Handle key events in detail view
+			switch msg.String() {
 			// TODO: esc feels slow because of terminal delay
-            case "esc", "backspace":
-                m.showDetail = false
-                return m, nil
-            default:
-                var cmd tea.Cmd
-                m.detailView, cmd = m.detailView.Update(msg)
-                cmds = append(cmds, cmd)
-            }
-        } else {
-            // Handle key events in list view
-            switch msg.String() {
-            case "ctrl+c", "q":
-                return m, tea.Quit
+			case "esc", "backspace":
+				m.showDetail = false
+				return m, nil
+			default:
+				var cmd tea.Cmd
+				m.detailView, cmd = m.detailView.Update(msg)
+				cmds = append(cmds, cmd)
+			}
+		} else {
+			// Handle key events in list view
+			switch msg.String() {
+			case "ctrl+c", "q":
+				return m, tea.Quit
 			case "j", "down":
 				if !m.loading && len(m.repositories) > 0 {
 					m.selectedIndex = min(m.selectedIndex+1, len(m.repositories)-1)
@@ -97,12 +97,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.showDetail = true
 					return m, m.detailView.FetchWorkflows()
 				}
-            }
-        }
+			}
+		}
 
 		var cmd tea.Cmd
-        m.viewport, cmd = m.viewport.Update(msg)
-        cmds = append(cmds, cmd)
+		m.viewport, cmd = m.viewport.Update(msg)
+		cmds = append(cmds, cmd)
 
 	case ClientInitializedMsg:
 		m.client = msg.Client
@@ -118,11 +118,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case DetailViewMsg:
-        if m.showDetail {
-            var cmd tea.Cmd
-            m.detailView, cmd = m.detailView.Update(msg)
-            cmds = append(cmds, cmd)
-        }
+		if m.showDetail {
+			var cmd tea.Cmd
+			m.detailView, cmd = m.detailView.Update(msg)
+			cmds = append(cmds, cmd)
+		}
 
 	case ErrMsg:
 		m.loading = false
@@ -146,8 +146,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	if m.showDetail && m.selectedRepo != nil {
-        return m.detailView.View()
-    }
+		return m.detailView.View()
+	}
 
 	if m.error != nil {
 		return fmt.Sprintf("Error: %v\n\n(press q to quit)", m.error)
@@ -185,7 +185,7 @@ func (m *Model) Run() error {
 	p := tea.NewProgram(
 		*m,
 		tea.WithAltScreen(),
-		)
+	)
 
 	_, error := p.Run()
 	return error

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/cpaluszek/pipeye/internal/github_client"
+	github "github.com/cpaluszek/pipeye/internal/github_client"
 	gh "github.com/google/go-github/v71/github"
 )
 
@@ -26,7 +26,7 @@ func RenderRepositoriesTable(repositories []*gh.Repository, selectedIndex int, w
 		TableHeaderStyle.Width(starsWidth).Align(lipgloss.Left).Render("Stars"),
 		TableHeaderStyle.Width(updatedWidth).Align(lipgloss.Left).Render("Last Updated"),
 		TableHeaderStyle.Width(workflowsWidth).Align(lipgloss.Left).Render("Workflows"),
-		)
+	)
 	s.WriteString(headers + "\n")
 	s.WriteString(strings.Repeat("─", totalWidth) + "\n")
 
@@ -59,7 +59,7 @@ func RenderRepositoriesTable(repositories []*gh.Repository, selectedIndex int, w
 			rowStyle.Width(starsWidth).Align(lipgloss.Left).Render(stars),
 			rowStyle.Width(updatedWidth).Align(lipgloss.Left).Render(updated),
 			rowStyle.Width(workflowsWidth).Align(lipgloss.Left).Render("✓"),
-			)
+		)
 		s.WriteString(row + "\n")
 	}
 
@@ -129,12 +129,11 @@ func RenderDetailView(repo *gh.Repository, workflowsWithRuns []*github.WorkflowW
 	s := &strings.Builder{}
 
 	// Header with repo info
-	s.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("39")).Render(
-		fmt.Sprintf("Repository: %s\n\n", *repo.FullName)))
+	s.WriteString(HeaderStyle.Render(fmt.Sprintf("Repository: %s\n\n", *repo.FullName)))
 
 	// Handle errors
 	if err != nil {
-		s.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(
+		s.WriteString(ErrorTextStyle.Render(
 			fmt.Sprintf("Error loading workflows: %v\n", err)))
 		return s.String()
 	}
@@ -154,7 +153,7 @@ func RenderDetailView(repo *gh.Repository, workflowsWithRuns []*github.WorkflowW
 		workflow := wwr.Workflow
 
 		// Workflow header
-		s.WriteString(lipgloss.NewStyle().Bold(true).Render(
+		s.WriteString(HeaderStyle.Render(
 			fmt.Sprintf("\n%d. %s", i+1, workflow.GetName())))
 		s.WriteString("\n   Path: " + workflow.GetPath())
 		s.WriteString("\n   State: " + getWorkflowStateDisplay(workflow.GetState()))
@@ -166,7 +165,7 @@ func RenderDetailView(repo *gh.Repository, workflowsWithRuns []*github.WorkflowW
 			s.WriteString("\n\n   Recent Runs:\n")
 			s.WriteString(renderWorkflowRunsTable(wwr.Runs))
 		} else if wwr.Error != nil {
-			s.WriteString("\n\n   " + lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(
+			s.WriteString("\n\n   " + ErrorTextStyle.Render(
 				fmt.Sprintf("Error loading runs: %v", wwr.Error)))
 		} else {
 			s.WriteString("\n\n   No recent runs found.")
@@ -195,7 +194,7 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs) string 
 		TableHeaderStyle.Width(10).Align(lipgloss.Left).Render("Branch"),
 		TableHeaderStyle.Width(20).Align(lipgloss.Left).Render("Triggered"),
 		TableHeaderStyle.Width(15).Align(lipgloss.Left).Render("Duration"),
-		) + "\n")
+	) + "\n")
 
 	// Table rows
 	for _, runWithJob := range runsWithJobs {
@@ -216,7 +215,7 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs) string 
 		}
 
 		// Style based on conclusion
-		statusStyle := lipgloss.NewStyle().Width(15)
+		statusStyle := RowStyle.Width(15)
 		status := run.GetStatus()
 		conclusion := run.GetConclusion()
 
@@ -242,12 +241,12 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs) string 
 		}
 		jobHeader := ""
 		for _, job := range runWithJob.Jobs {
-			statusStyle := lipgloss.NewStyle()
+			statusStyle := RowStyle
 			switch job.GetConclusion() {
 			case "success":
 				statusStyle = statusStyle.Foreground(lipgloss.Color("10")) // Green
 			case "failure":
-				statusStyle = statusStyle.Foreground(lipgloss.Color("9"))  // Red
+				statusStyle = statusStyle.Foreground(lipgloss.Color("9")) // Red
 			case "cancelled":
 				statusStyle = statusStyle.Foreground(lipgloss.Color("11")) // Yellow
 			}
@@ -256,7 +255,7 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs) string 
 				lipgloss.Center,
 				statusStyle.Render("●"),
 				" ",
-				)
+			)
 		}
 
 		// Table row
@@ -266,7 +265,7 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs) string 
 			RowStyle.Width(20).Render(formatTime(run.GetCreatedAt().Time)),
 			RowStyle.Width(15).Render(duration),
 			RowStyle.Render(jobHeader),
-			) + "\n")
+		) + "\n")
 	}
 
 	return s.String()
@@ -275,9 +274,9 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs) string 
 func getWorkflowStateDisplay(state string) string {
 	switch state {
 	case "active":
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Render("● active")
+		return ActiveWorkflowStyle.Render("● active")
 	case "disabled_manually", "disabled_inactivity":
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("8")).Render("○ disabled")
+		return DisabledWorkflowStyle.Render("○ disabled")
 	default:
 		return state
 	}
