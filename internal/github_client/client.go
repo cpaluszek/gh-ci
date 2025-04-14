@@ -15,8 +15,13 @@ type Client struct {
 
 type WorkflowWithRuns struct {
 	Workflow *github.Workflow
-	Runs     []*github.WorkflowRun
+	Runs     []*WorkflowRunWithJobs
 	Error    error
+}
+
+type WorkflowRunWithJobs struct {
+	Run		*github.WorkflowRun
+	Jobs	[]*github.WorkflowJob
 }
 
 // TODO: if fetching is used on interval, should use cache for repo workflows
@@ -123,10 +128,10 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 
 		// Fetch 5 most recent runs for this workflow
 		runs, _, err := c.Client.Actions.ListWorkflowRunsByID(
-			ctx, 
-			owner, 
-			repo, 
-			workflow.GetID(), 
+			ctx,
+			owner,
+			repo,
+			workflow.GetID(),
 			&github.ListWorkflowRunsOptions{
 				ListOptions: github.ListOptions{PerPage: 20},
 			},
@@ -134,10 +139,36 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 
 		if err != nil {
 			workflowWithRuns.Error = err
-		} else if runs != nil {
-			workflowWithRuns.Runs = runs.WorkflowRuns
+			result = append(result, workflowWithRuns)
+			continue
 		}
 
+		if runs != nil && len(runs.WorkflowRuns) > 0 {
+			runsWithJobs := make([]*WorkflowRunWithJobs, 0, len(runs.WorkflowRuns))
+
+			for _, run := range runs.WorkflowRuns {
+				runWithJobs := &WorkflowRunWithJobs{
+					Run: run,
+				}
+
+				jobs, _, err := c.Client.Actions.ListWorkflowJobs(
+					ctx,
+					owner,
+					repo,
+					run.GetID(),
+					&github.ListWorkflowJobsOptions{
+						ListOptions: github.ListOptions{PerPage: 100},
+					},
+					)
+
+				if err == nil && jobs != nil {
+					runWithJobs.Jobs = jobs.Jobs
+				}
+
+				runsWithJobs = append(runsWithJobs, runWithJobs)
+			}
+			workflowWithRuns.Runs = runsWithJobs
+		}
 		result = append(result, workflowWithRuns)
 	}
 

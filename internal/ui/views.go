@@ -182,8 +182,8 @@ func RenderDetailView(repo *github.Repository, workflowsWithRuns []*github_clien
 }
 
 // renderWorkflowRunsTable renders a table of workflow runs
-func renderWorkflowRunsTable(runs []*github.WorkflowRun) string {
-	if len(runs) == 0 {
+func renderWorkflowRunsTable(runsWithJobs []*github_client.WorkflowRunWithJobs) string {
+	if len(runsWithJobs) == 0 {
 		return "   No recent runs found."
 	}
 
@@ -198,7 +198,8 @@ func renderWorkflowRunsTable(runs []*github.WorkflowRun) string {
 		) + "\n")
 
 	// Table rows
-	for _, run := range runs {
+	for _, runWithJob := range runsWithJobs {
+		run := runWithJob.Run
 		// Calculate duration
 		var duration string
 		if run.GetUpdatedAt().After(run.GetCreatedAt().Time) {
@@ -239,6 +240,24 @@ func renderWorkflowRunsTable(runs []*github.WorkflowRun) string {
 		if conclusion != "" && status == "completed" {
 			displayStatus = conclusion
 		}
+		jobHeader := ""
+		for _, job := range runWithJob.Jobs {
+			statusStyle := lipgloss.NewStyle()
+			switch job.GetConclusion() {
+			case "success":
+				statusStyle = statusStyle.Foreground(lipgloss.Color("10")) // Green
+			case "failure":
+				statusStyle = statusStyle.Foreground(lipgloss.Color("9"))  // Red
+			case "cancelled":
+				statusStyle = statusStyle.Foreground(lipgloss.Color("11")) // Yellow
+			}
+
+			jobHeader = lipgloss.JoinHorizontal(
+				lipgloss.Center,
+				statusStyle.Render("●"),
+				" ",
+				)
+		}
 
 		// Table row
 		s.WriteString("   " + lipgloss.JoinHorizontal(lipgloss.Top,
@@ -246,6 +265,7 @@ func renderWorkflowRunsTable(runs []*github.WorkflowRun) string {
 			RowStyle.Width(10).Render(run.GetHeadBranch()),
 			RowStyle.Width(20).Render(formatTime(run.GetCreatedAt().Time)),
 			RowStyle.Width(15).Render(duration),
+			RowStyle.Render(jobHeader),
 			) + "\n")
 	}
 
