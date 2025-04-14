@@ -1,4 +1,4 @@
-package app
+package views
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cpaluszek/pipeye/internal/github"
+	"github.com/cpaluszek/pipeye/internal/models"
 	"github.com/cpaluszek/pipeye/internal/ui"
 	gh "github.com/google/go-github/v71/github"
 )
@@ -33,7 +34,7 @@ func (d DetailView) Init() tea.Cmd {
 	// Fetch workflows with runs for the repository
 	return tea.Batch(
 		d.Spinner.Tick,
-		FetchWorkflows(d.Client, d.repository.GetFullName()),
+		models.FetchWorkflows(d.Client, d.repository.GetFullName()),
 	)
 }
 
@@ -42,7 +43,7 @@ func (d DetailView) Update(msg tea.Msg) (DetailView, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case DetailViewMsg:
+	case models.DetailViewMsg:
 		d.Loading = false
 		if msg.Error != nil {
 			d.Error = msg.Error

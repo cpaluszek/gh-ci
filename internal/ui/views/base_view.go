@@ -1,4 +1,4 @@
-package app
+package views
 
 import (
 	"github.com/charmbracelet/bubbles/spinner"

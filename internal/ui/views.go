@@ -86,7 +86,7 @@ func RenderDetailViewStatusBar(loading bool, style lipgloss.Style) string {
 	if loading {
 		content = "Loading workflow... "
 	} else {
-		content = "↑/↓: navigate · f/b: page up/down · esc: back to repositories"
+		content = "↑/↓: navigate · esc/backspace: back to repositories"
 	}
 
 	return style.Render(content)

@@ -1,43 +1,32 @@
 package app
 
 import (
-	"fmt"
-
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	gh "github.com/google/go-github/v71/github"
 
 	"github.com/cpaluszek/pipeye/internal/config"
 	"github.com/cpaluszek/pipeye/internal/github"
-	"github.com/cpaluszek/pipeye/internal/ui"
+	"github.com/cpaluszek/pipeye/internal/models"
+	"github.com/cpaluszek/pipeye/internal/ui/views"
 )
 
 type Model struct {
-	BaseView
-	config       *config.Config
-	Client       *github.Client
-	repositories []*gh.Repository
-	// Detail view
-	selectedRepo  *gh.Repository
-	selectedIndex int
-	detailView    DetailView
-	showDetail    bool
+	views.BaseView
+	config     *config.Config
+	Client     *github.Client
+	ListView   views.ListView
+	detailView views.DetailView
+	showDetail bool
 }
 
 func New(cfg *config.Config) *Model {
-	baseView := NewBaseView(viewport.New(0, 0), nil)
 	return &Model{
-		BaseView:      baseView,
-		config:        cfg,
-		selectedIndex: 0,
+		config:     cfg,
+		showDetail: false,
 	}
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(
-		InitClient(m.config.Github.Token),
-		m.Spinner.Tick,
-	)
+	return models.InitClient(m.config.Github.Token)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -45,16 +34,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.UpdateSize(msg.Width, msg.Height)
 		if m.showDetail {
-			m.detailView.UpdateSize(msg.Width, msg.Height)
+			detailView, cmd := m.detailView.Update(msg)
+			m.detailView = detailView
+			cmds = append(cmds, cmd)
+		} else {
+			listView, cmd := m.ListView.Update(msg)
+			m.ListView = listView
+			cmds = append(cmds, cmd)
 		}
-		return m, nil
 
 	case tea.KeyMsg:
 		if m.showDetail {
 			// Handle key events in detail view
-			// TODO: esc feels slow because of terminal delay
 			switch msg.String() {
 			case "esc", "backspace":
 				m.showDetail = false
@@ -69,62 +61,54 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "ctrl+c", "q":
 				return m, tea.Quit
-			case "j", "down":
-				if !m.Loading && len(m.repositories) > 0 {
-					m.selectedIndex = min(m.selectedIndex+1, len(m.repositories)-1)
-					return m, nil
-				}
-			case "k", "up":
-				if !m.Loading && len(m.repositories) > 0 {
-					m.selectedIndex = max(m.selectedIndex-1, 0)
-					return m, nil
-				}
 			case "enter":
-				if len(m.repositories) > 0 {
-					m.selectedRepo = m.repositories[m.selectedIndex]
-					m.detailView = NewDetailView(m.selectedRepo, m.Viewport, m.Client)
+				if m.ListView.HasRepositories() {
+					selectedRepo := m.ListView.GetSelectedRepo()
+					m.detailView = views.NewDetailView(selectedRepo, m.ListView.Viewport, m.Client)
 					m.showDetail = true
 					return m, m.detailView.Init()
 				}
+				return m, nil
+			default:
+				var cmd tea.Cmd
+				m.ListView, cmd = m.ListView.Update(msg)
+				cmds = append(cmds, cmd)
 			}
 		}
 
+	case models.ClientInitializedMsg:
+		m.Client = msg.Client
+		m.ListView = views.NewListView(m.Client)
+		return m, m.ListView.Init()
+
+	case models.RepositoriesMsg:
 		var cmd tea.Cmd
-		m.Viewport, cmd = m.Viewport.Update(msg)
+		m.ListView, cmd = m.ListView.Update(msg)
 		cmds = append(cmds, cmd)
 
-	case ClientInitializedMsg:
-		m.Client = msg.Client
-		cmds = append(cmds, FetchRepositories(m.Client))
-
-	case RepositoriesMsg:
-		m.Loading = false
-		if msg.Error != nil {
-			m.Error = msg.Error
-			return m, nil
-		}
-		m.repositories = msg.Repositories
-		return m, nil
-
-	case DetailViewMsg:
+	case models.DetailViewMsg:
 		if m.showDetail {
 			var cmd tea.Cmd
 			m.detailView, cmd = m.detailView.Update(msg)
 			cmds = append(cmds, cmd)
 		}
 
-	case ErrMsg:
-		m.Loading = false
-		m.Error = msg.Err
+	case models.ErrMsg:
+		if m.showDetail {
+			m.detailView.Error = msg.Err
+			m.detailView.Loading = false
+		} else {
+			m.ListView.Error = msg.Err
+			m.ListView.Loading = false
+		}
 		return m, nil
 
 	default:
-		if m.Loading {
+		if !m.showDetail {
 			var cmd tea.Cmd
-			m.Spinner, cmd = m.Spinner.Update(msg)
+			m.ListView, cmd = m.ListView.Update(msg)
 			cmds = append(cmds, cmd)
-		} else if m.showDetail && m.detailView.Loading {
-			// Forward spinner updates to detail view when it's visible and loading
+		} else {
 			var cmd tea.Cmd
 			m.detailView, cmd = m.detailView.Update(msg)
 			cmds = append(cmds, cmd)
@@ -139,29 +123,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	if m.showDetail && m.selectedRepo != nil {
+	if m.showDetail {
 		return m.detailView.View()
 	}
-
-	if m.Error != nil {
-		return fmt.Sprintf("Error: %v\n\n(press q to quit)", m.Error)
-	}
-
-	var content string
-
-	if m.Loading {
-		content = fmt.Sprintf("%s Fetching repositories...\n\n", m.Spinner.View())
-	} else if len(m.repositories) > 0 {
-		content = ui.RenderRepositoriesTable(m.repositories, m.selectedIndex, m.Viewport.Width)
-	} else if m.Client != nil {
-		content = "No repositories found.\n"
-	}
-
-	m.Viewport.SetContent(content)
-
-	statusBar := ui.RenderStatusBar(m.Loading, len(m.repositories), m.StatusBarStyle)
-
-	return fmt.Sprintf("%s\n%s", m.Viewport.View(), statusBar)
+	return m.ListView.View()
 }
 
 func (m *Model) Run() error {
@@ -177,7 +142,7 @@ func (m *Model) Run() error {
 	}()
 
 	p := tea.NewProgram(
-		*m,
+		m,
 		tea.WithAltScreen(),
 	)
 
