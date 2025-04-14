@@ -253,6 +253,7 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs) string 
 
 			jobHeader = lipgloss.JoinHorizontal(
 				lipgloss.Center,
+				jobHeader,
 				statusStyle.Render("●"),
 				" ",
 			)
