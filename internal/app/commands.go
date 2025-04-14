@@ -7,7 +7,7 @@ import (
 
 func InitClient(token string) tea.Cmd {
     return func() tea.Msg {
-        client, err := github_client.NewClient(token)
+        client, err := github.NewClient(token)
         if err != nil {
             return ErrMsg{Err: err}
         }
@@ -15,7 +15,7 @@ func InitClient(token string) tea.Cmd {
     }
 }
 
-func FetchRepositories(client *github_client.Client) tea.Cmd {
+func FetchRepositories(client *github.Client) tea.Cmd {
     return func() tea.Msg {
         repos, err := client.FetchRepositoriesWithWorkflows()
         if err != nil {

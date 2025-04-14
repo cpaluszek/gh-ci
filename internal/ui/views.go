@@ -7,10 +7,10 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cpaluszek/pipeye/internal/github_client"
-	"github.com/google/go-github/v71/github"
+	gh "github.com/google/go-github/v71/github"
 )
 
-func RenderRepositoriesTable(repositories []*github.Repository, selectedIndex int, width int) string {
+func RenderRepositoriesTable(repositories []*gh.Repository, selectedIndex int, width int) string {
 	var s strings.Builder
 
 	nameWidth, langWidth, starsWidth, updatedWidth, workflowsWidth := calculateColumnWidths(width)
@@ -125,7 +125,7 @@ func calculateColumnWidths(width int) (nameWidth, langWidth, starsWidth, updated
 	return
 }
 
-func RenderDetailView(repo *github.Repository, workflowsWithRuns []*github_client.WorkflowWithRuns, loading bool, err error) string {
+func RenderDetailView(repo *gh.Repository, workflowsWithRuns []*github.WorkflowWithRuns, loading bool, err error) string {
 	s := &strings.Builder{}
 
 	// Header with repo info
@@ -182,7 +182,7 @@ func RenderDetailView(repo *github.Repository, workflowsWithRuns []*github_clien
 }
 
 // renderWorkflowRunsTable renders a table of workflow runs
-func renderWorkflowRunsTable(runsWithJobs []*github_client.WorkflowRunWithJobs) string {
+func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs) string {
 	if len(runsWithJobs) == 0 {
 		return "   No recent runs found."
 	}

@@ -6,8 +6,8 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	gh "github.com/google/go-github/v71/github"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/google/go-github/v71/github"
 
 	"github.com/cpaluszek/pipeye/internal/config"
 	"github.com/cpaluszek/pipeye/internal/github_client"
@@ -16,15 +16,15 @@ import (
 
 type Model struct {
 	config *config.Config
-	client *github_client.Client
-	repositories []*github.Repository
+	client *github.Client
+	repositories []*gh.Repository
 	viewport viewport.Model
 	error error
 	loading bool
 	spinner spinner.Model
 	statusBarStyle lipgloss.Style
 	// Detail view
-	selectedRepo *github.Repository
+	selectedRepo *gh.Repository
 	selectedIndex int
 	detailView DetailView
 	showDetail bool

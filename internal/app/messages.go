@@ -2,7 +2,7 @@ package app
 
 import (
     "github.com/cpaluszek/pipeye/internal/github_client"
-    "github.com/google/go-github/v71/github"
+    gh "github.com/google/go-github/v71/github"
 )
 
 type (
@@ -11,11 +11,11 @@ type (
     }
 
     ClientInitializedMsg struct {
-        Client *github_client.Client
+        Client *github.Client
     }
 
     RepositoriesMsg struct {
-        Repositories []*github.Repository
+        Repositories []*gh.Repository
         Error        error
     }
 )
@@ -24,11 +24,11 @@ func NewErrMsg(err error) ErrMsg {
     return ErrMsg{Err: err}
 }
 
-func NewClientInitializedMsg(client *github_client.Client) ClientInitializedMsg {
+func NewClientInitializedMsg(client *github.Client) ClientInitializedMsg {
     return ClientInitializedMsg{Client: client}
 }
 
-func NewRepositoriesMsg(repos []*github.Repository, err error) RepositoriesMsg {
+func NewRepositoriesMsg(repos []*gh.Repository, err error) RepositoriesMsg {
     return RepositoriesMsg{
         Repositories: repos,
         Error:        err,

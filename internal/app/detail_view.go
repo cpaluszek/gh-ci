@@ -8,27 +8,27 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cpaluszek/pipeye/internal/github_client"
 	"github.com/cpaluszek/pipeye/internal/ui"
-	"github.com/google/go-github/v71/github"
+	gh "github.com/google/go-github/v71/github"
 )
 
 // TODO: fetch workflow with repos to eliminate loading time
 
 type DetailViewMsg struct {
-	WorkflowsWithRuns []*github_client.WorkflowWithRuns
+	WorkflowsWithRuns []*github.WorkflowWithRuns
 	Error     error
 }
 
 type DetailView struct {
-	repository  *github.Repository
-	workflowsWithRuns []*github_client.WorkflowWithRuns
+	repository  *gh.Repository
+	workflowsWithRuns []*github.WorkflowWithRuns
 	loading     bool
 	error       error
 	viewport    viewport.Model
-	client      *github_client.Client
+	client      *github.Client
 	statusBarStyle lipgloss.Style
 }
 
-func NewDetailView(repo *github.Repository, client *github_client.Client, viewport viewport.Model) DetailView {
+func NewDetailView(repo *gh.Repository, client *github.Client, viewport viewport.Model) DetailView {
 	return DetailView{
 		repository: repo,
 		loading:    true,
@@ -40,7 +40,7 @@ func NewDetailView(repo *github.Repository, client *github_client.Client, viewpo
 
 func (d DetailView) FetchWorkflows() tea.Cmd {
 	return func() tea.Msg {
-		owner, repo := github_client.ParseFullName(*d.repository.FullName)
+		owner, repo := github.ParseFullName(*d.repository.FullName)
 		workflowsWithRuns, err := d.client.FetchWorkflowsWithRuns(owner, repo)
 		return DetailViewMsg{
 			WorkflowsWithRuns: workflowsWithRuns,

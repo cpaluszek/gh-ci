@@ -1,4 +1,4 @@
-package github_client
+package github
 
 import (
 	"context"
@@ -6,43 +6,43 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v71/github"
+	gh "github.com/google/go-github/v71/github"
 )
 
 type Client struct {
-	Client *github.Client
+	Client *gh.Client
 }
 
 type WorkflowWithRuns struct {
-	Workflow *github.Workflow
+	Workflow *gh.Workflow
 	Runs     []*WorkflowRunWithJobs
 	Error    error
 }
 
 type WorkflowRunWithJobs struct {
-	Run		*github.WorkflowRun
-	Jobs	[]*github.WorkflowJob
+	Run		*gh.WorkflowRun
+	Jobs	[]*gh.WorkflowJob
 }
 
 // TODO: if fetching is used on interval, should use cache for repo workflows
 
 func NewClient(token string) (*Client, error) {
-	client := github.NewClient(nil).WithAuthToken(token)
+	client := gh.NewClient(nil).WithAuthToken(token)
 	return &Client{
 		Client: client,
 	}, nil
 }
 
-func (c *Client) fetchRepositories() ([]*github.Repository, error) {
+func (c *Client) fetchRepositories() ([]*gh.Repository, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 
-	opt := &github.RepositoryListByAuthenticatedUserOptions{
+	opt := &gh.RepositoryListByAuthenticatedUserOptions{
 
-		ListOptions: github.ListOptions{PerPage: 20},
+		ListOptions: gh.ListOptions{PerPage: 20},
 	}
 
-	var allRepos []*github.Repository
+	var allRepos []*gh.Repository
 	for {
 		repos, resp, err := c.Client.Repositories.ListByAuthenticatedUser(ctx, opt)
 		if err != nil {
@@ -57,7 +57,7 @@ func (c *Client) fetchRepositories() ([]*github.Repository, error) {
 	return allRepos, nil
 }
 
-func (c *Client) FetchRepositoriesWithWorkflows() ([]*github.Repository, error) {
+func (c *Client) FetchRepositoriesWithWorkflows() ([]*gh.Repository, error) {
 	repos, err := c.fetchRepositories()
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (c *Client) FetchRepositoriesWithWorkflows() ([]*github.Repository, error) 
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 
-	var repositoryWorkflows []*github.Repository
+	var repositoryWorkflows []*gh.Repository
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
 
@@ -76,7 +76,7 @@ func (c *Client) FetchRepositoriesWithWorkflows() ([]*github.Repository, error) 
 	for _, repo := range repos {
 		wg.Add(1)
 
-		go func(repo *github.Repository) {
+		go func(repo *gh.Repository) {
 			defer wg.Done()
 
 			semaphore <- struct{}{}
@@ -86,7 +86,7 @@ func (c *Client) FetchRepositoriesWithWorkflows() ([]*github.Repository, error) 
 				ctx,
 				repo.GetOwner().GetLogin(),
 				repo.GetName(),
-				&github.ListOptions{PerPage: 1},
+				&gh.ListOptions{PerPage: 1},
 				)
 
 			if err != nil {
@@ -111,7 +111,7 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 	defer cancel()
 
 	// Fetch workflows
-	workflows, _, err := c.Client.Actions.ListWorkflows(ctx, owner, repo, &github.ListOptions{
+	workflows, _, err := c.Client.Actions.ListWorkflows(ctx, owner, repo, &gh.ListOptions{
 		PerPage: 100,
 	})
 	if err != nil {
@@ -132,8 +132,8 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 			owner,
 			repo,
 			workflow.GetID(),
-			&github.ListWorkflowRunsOptions{
-				ListOptions: github.ListOptions{PerPage: 20},
+			&gh.ListWorkflowRunsOptions{
+				ListOptions: gh.ListOptions{PerPage: 20},
 			},
 			)
 
@@ -156,8 +156,8 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 					owner,
 					repo,
 					run.GetID(),
-					&github.ListWorkflowJobsOptions{
-						ListOptions: github.ListOptions{PerPage: 100},
+					&gh.ListWorkflowJobsOptions{
+						ListOptions: gh.ListOptions{PerPage: 100},
 					},
 					)
 
