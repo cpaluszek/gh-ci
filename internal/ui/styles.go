@@ -26,7 +26,7 @@ var (
 	// subtext0 = lipgloss.Color("#a6adc8")
 	// overlay2 = lipgloss.Color("#9399b2")
 	overlay1 = lipgloss.Color("#7f849c")
-	overlay0 = lipgloss.Color("#6c7086")
+	// overlay0 = lipgloss.Color("#6c7086")
 
 	// Surface colors
 	// surface2 = lipgloss.Color("#585b70")
