@@ -158,7 +158,7 @@ func RenderDetailView(repo *gh.Repository, workflowsWithRuns []*github.WorkflowW
 		s.WriteString("\n   Path: " + workflow.GetPath())
 		s.WriteString("\n   State: " + getWorkflowStateDisplay(workflow.GetState()))
 		s.WriteString("\n   Created: " + formatTime(workflow.GetCreatedAt().Time))
-		s.WriteString("\n   Last Updated: " + formatTime(workflow.GetUpdatedAt().Time))
+		s.WriteString("     Last Updated: " + formatTime(workflow.GetUpdatedAt().Time))
 
 		// Render runs if available
 		if len(wwr.Runs) > 0 {
@@ -194,6 +194,8 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs) string 
 		TableHeaderStyle.Width(10).Align(lipgloss.Left).Render("Branch"),
 		TableHeaderStyle.Width(20).Align(lipgloss.Left).Render("Triggered"),
 		TableHeaderStyle.Width(15).Align(lipgloss.Left).Render("Duration"),
+		TableHeaderStyle.Width(20).Align(lipgloss.Left).Render("Jobs"),
+		TableHeaderStyle.Align(lipgloss.Left).Render("Commit"),
 	) + "\n")
 
 	// Table rows
@@ -212,6 +214,18 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs) string 
 			}
 		} else {
 			duration = "running"
+		}
+
+		commitMsg := run.GetHeadCommit().GetMessage()
+		if len(commitMsg) > 0 {
+			if idx := strings.Index(commitMsg, "\n"); idx > 0 {
+				commitMsg = commitMsg[:idx]
+			}
+			if len(commitMsg) > 57 {
+				commitMsg = commitMsg[:57] + "..."
+			}
+		} else {
+			commitMsg = "-"
 		}
 
 		// Style based on conclusion
@@ -265,7 +279,8 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs) string 
 			RowStyle.Width(10).Render(run.GetHeadBranch()),
 			RowStyle.Width(20).Render(formatTime(run.GetCreatedAt().Time)),
 			RowStyle.Width(15).Render(duration),
-			RowStyle.Render(jobHeader),
+			RowStyle.Width(20).Render(jobHeader),
+			RowStyle.Render(commitMsg),
 		) + "\n")
 	}
 
