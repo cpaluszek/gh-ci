@@ -9,7 +9,7 @@ import (
 
 	"github.com/cpaluszek/pipeye/internal/github"
 	"github.com/cpaluszek/pipeye/internal/models"
-	"github.com/cpaluszek/pipeye/internal/ui"
+	"github.com/cpaluszek/pipeye/internal/ui/render"
 )
 
 type ListView struct {
@@ -96,13 +96,13 @@ func (l ListView) View() string {
 	if l.Loading {
 		content = fmt.Sprintf("%s Fetching repositories...\n\n", l.Spinner.View())
 	} else if len(l.Repositories) > 0 {
-		content = ui.RenderRepositoriesTable(l.Repositories, l.selectedIndex, l.Viewport.Width)
+		content = render.RenderRepositoriesTable(l.Repositories, l.selectedIndex, l.Viewport.Width)
 	} else if l.Client != nil {
 		content = "No repositories found.\n"
 	}
 
 	l.Viewport.SetContent(content)
-	statusBar := ui.RenderStatusBar(l.Loading, len(l.Repositories), l.StatusBarStyle)
+	statusBar := render.RenderStatusBar(l.Loading, len(l.Repositories), l.StatusBarStyle)
 
 	return fmt.Sprintf("%s\n%s", l.Viewport.View(), statusBar)
 }

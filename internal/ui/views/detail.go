@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cpaluszek/pipeye/internal/github"
 	"github.com/cpaluszek/pipeye/internal/models"
-	"github.com/cpaluszek/pipeye/internal/ui"
+	"github.com/cpaluszek/pipeye/internal/ui/render"
 	gh "github.com/google/go-github/v71/github"
 )
 
@@ -15,15 +15,19 @@ import (
 
 type DetailView struct {
 	BaseView
-	repository        *gh.Repository
-	workflowsWithRuns []*github.WorkflowWithRuns
+	repository            *gh.Repository
+	workflowsWithRuns     []*github.WorkflowWithRuns
+	selectedWorkflowIndex int
+	selectedRunIndex      int
 }
 
 func NewDetailView(repo *gh.Repository, vp viewport.Model, client *github.Client) DetailView {
 	baseView := NewBaseView(vp, client)
 	return DetailView{
-		BaseView:   baseView,
-		repository: repo,
+		BaseView:              baseView,
+		repository:            repo,
+		selectedWorkflowIndex: 0,
+		selectedRunIndex:      0,
 	}
 }
 
@@ -59,6 +63,23 @@ func (d DetailView) Update(msg tea.Msg) (DetailView, tea.Cmd) {
 		switch msg.String() {
 		case "esc", "backspace":
 			return d, nil // we'll handle this in the main model
+
+		case "j", "down":
+			if !d.Loading && len(d.workflowsWithRuns) > 0 {
+				runs := d.workflowsWithRuns[d.selectedWorkflowIndex].Runs
+				if len(runs) > 0 {
+					d.selectedRunIndex = min(d.selectedRunIndex+1, len(runs)-1)
+				}
+				return d, nil
+			}
+		case "k", "up":
+			if !d.Loading && len(d.workflowsWithRuns) > 0 {
+				runs := d.workflowsWithRuns[d.selectedWorkflowIndex].Runs
+				if len(runs) > 0 {
+					d.selectedRunIndex = max(d.selectedRunIndex-1, 0)
+				}
+				return d, nil
+			}
 		}
 
 		// Forward key messages to the viewport
@@ -85,11 +106,11 @@ func (d DetailView) View() string {
 	if d.Loading {
 		content = fmt.Sprintf("%s Loading workflows...\n\n", d.Spinner.View())
 	} else {
-		content = ui.RenderDetailView(d.repository, d.workflowsWithRuns, d.Loading, d.Error)
+		content = render.RenderDetailView(d.repository, d.workflowsWithRuns, d.selectedRunIndex, d.Loading, d.Error)
 	}
 
 	d.Viewport.SetContent(content)
-	statusBar := ui.RenderDetailViewStatusBar(d.Loading, d.StatusBarStyle)
+	statusBar := render.RenderDetailViewStatusBar(d.Loading, d.StatusBarStyle)
 
 	return fmt.Sprintf("%s\n%s", d.Viewport.View(), statusBar)
 }
