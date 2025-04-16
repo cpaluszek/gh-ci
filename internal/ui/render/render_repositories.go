@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 	"github.com/cpaluszek/pipeye/internal/ui"
 	gh "github.com/google/go-github/v71/github"
 )
@@ -23,70 +24,95 @@ func RenderRepositoriesStatusBar(loading bool, repoCount int, style lipgloss.Sty
 	return style.Render(content)
 }
 
-func RenderWorkflowsStatusBar(loading bool, style lipgloss.Style) string {
-	var content string
-
-	if loading {
-		content = "Loading workflow... "
-	} else {
-		content = "↑/↓: navigate · esc/backspace: back to repositories"
-	}
-
-	return style.Render(content)
-}
-
 func RenderRepositoriesTable(repositories []*gh.Repository, selectedIndex int, width int) string {
 	var s strings.Builder
 
-	nameWidth, langWidth, starsWidth, updatedWidth, workflowsWidth := calculateColumnWidths(width)
-	totalWidth := nameWidth + langWidth + starsWidth + updatedWidth + workflowsWidth
+	// nameWidth, langWidth, starsWidth, updatedWidth, workflowsWidth := calculateColumnWidths(width)
+	// totalWidth := nameWidth + langWidth + starsWidth + updatedWidth + workflowsWidth
 
 	s.WriteString(ui.HeaderStyle.Render("GitHub Repositories with Workflows"))
 	s.WriteString("\n\n")
 
-	// Column headers
-	headers := lipgloss.JoinHorizontal(lipgloss.Top,
-		ui.TableHeaderStyle.Width(nameWidth).Align(lipgloss.Left).Render("Repository"),
-		ui.TableHeaderStyle.Width(langWidth).Align(lipgloss.Left).Render("Language"),
-		ui.TableHeaderStyle.Width(starsWidth).Align(lipgloss.Left).Render("Stars"),
-		ui.TableHeaderStyle.Width(updatedWidth).Align(lipgloss.Left).Render("Last Updated"),
-		ui.TableHeaderStyle.Width(workflowsWidth).Align(lipgloss.Left).Render("Workflows"),
-	)
-	s.WriteString(headers + "\n")
-	s.WriteString(strings.Repeat("─", totalWidth) + "\n")
+	// TODO: test table
+	t := table.New().Border(lipgloss.RoundedBorder()).BorderStyle(lipgloss.NewStyle().Foreground(ui.Mauve)).Width(width).
+		Headers("Repository", "Language", "Stars", "Last Updated").
+		StyleFunc(func(row, col int) lipgloss.Style {
+			if row == table.HeaderRow {
+				return ui.TableHeaderStyle
+			} else if row == selectedIndex {
+				return ui.SelectedRowStyle
+			}
+			return ui.RowStyle
+		})
 
-	for i, repo := range repositories {
+	for _, repo := range repositories {
 		language := ""
 		if repo.Language != nil {
 			language = *repo.Language
 		}
-
 		stars := "0"
 		if repo.StargazersCount != nil {
 			stars = fmt.Sprintf("%d", *repo.StargazersCount)
 		}
-
 		updated := "Unknown"
 		if repo.UpdatedAt != nil {
 			updated = repo.UpdatedAt.Format("Jan 2, 2006")
 		}
 
-		var rowStyle lipgloss.Style
-		if i == selectedIndex {
-			rowStyle = ui.SelectedRowStyle
-		} else {
-			rowStyle = ui.RowStyle
+		var row = []string{
+			ui.RowStyle.Render(*repo.FullName),
+			ui.RowStyle.Render(language),
+			ui.RowStyle.Render(stars),
+			ui.RowStyle.Render(updated),
 		}
-
-		row := lipgloss.JoinHorizontal(lipgloss.Top,
-			rowStyle.Width(nameWidth).Align(lipgloss.Left).Render(*repo.FullName),
-			rowStyle.Width(langWidth).Align(lipgloss.Left).Render(language),
-			rowStyle.Width(starsWidth).Align(lipgloss.Left).Render(stars),
-			rowStyle.Width(updatedWidth).Align(lipgloss.Left).Render(updated),
-			rowStyle.Width(workflowsWidth).Align(lipgloss.Left).Render("✓"),
-		)
-		s.WriteString(row + "\n")
+		t.Row(row...)
 	}
+
+	s.WriteString(t.Render())
+
+	// Column headers
+	// headers := lipgloss.JoinHorizontal(lipgloss.Top,
+	// 	ui.TableHeaderStyle.Width(nameWidth).Align(lipgloss.Left).Render("Repository"),
+	// 	ui.TableHeaderStyle.Width(langWidth).Align(lipgloss.Left).Render("Language"),
+	// 	ui.TableHeaderStyle.Width(starsWidth).Align(lipgloss.Left).Render("Stars"),
+	// 	ui.TableHeaderStyle.Width(updatedWidth).Align(lipgloss.Left).Render("Last Updated"),
+	// 	ui.TableHeaderStyle.Width(workflowsWidth).Align(lipgloss.Left).Render("Workflows"),
+	// )
+	// s.WriteString(headers + "\n")
+	// s.WriteString(strings.Repeat("─", totalWidth) + "\n")
+
+	// for i, repo := range repositories {
+	// 	language := ""
+	// 	if repo.Language != nil {
+	// 		language = *repo.Language
+	// 	}
+
+	// 	stars := "0"
+	// 	if repo.StargazersCount != nil {
+	// 		stars = fmt.Sprintf("%d", *repo.StargazersCount)
+	// 	}
+
+	// 	updated := "Unknown"
+	// 	if repo.UpdatedAt != nil {
+	// 		updated = repo.UpdatedAt.Format("Jan 2, 2006")
+	// 	}
+
+	// 	var rowStyle lipgloss.Style
+	// 	if i == selectedIndex {
+	// 		rowStyle = ui.SelectedRowStyle
+	// 	} else {
+	// 		rowStyle = ui.RowStyle
+	// 	}
+
+	// 	row := lipgloss.JoinHorizontal(lipgloss.Top,
+	// 		rowStyle.Width(nameWidth).Align(lipgloss.Left).Render(*repo.FullName),
+	// 		rowStyle.Width(langWidth).Align(lipgloss.Left).Render(language),
+	// 		rowStyle.Width(starsWidth).Align(lipgloss.Left).Render(stars),
+	// 		rowStyle.Width(updatedWidth).Align(lipgloss.Left).Render(updated),
+	// 		rowStyle.Width(workflowsWidth).Align(lipgloss.Left).Render("✓"),
+	// 	)
+	// 	s.WriteString(row + "\n")
+	// }
 
 	return s.String()
 }

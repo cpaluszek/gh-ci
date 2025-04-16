@@ -11,6 +11,18 @@ import (
 	gh "github.com/google/go-github/v71/github"
 )
 
+func RenderWorkflowsStatusBar(loading bool, style lipgloss.Style) string {
+	var content string
+
+	if loading {
+		content = "Loading workflow... "
+	} else {
+		content = "↑/↓: navigate · esc/backspace: back to repositories"
+	}
+
+	return style.Render(content)
+}
+
 func RenderWorkflowsView(repo *gh.Repository, workflowsWithRuns []*github.WorkflowWithRuns, selectedRunIndex int, loading bool, err error) string {
 	s := &strings.Builder{}
 

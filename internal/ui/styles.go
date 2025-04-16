@@ -7,9 +7,9 @@ var (
 	// Base colors
 	// rosewater = lipgloss.Color("#f5e0dc")
 	// flamingo  = lipgloss.Color("#f2cdcd")
-	Pink = lipgloss.Color("#f5c2e7")
-	// mauve     = lipgloss.Color("#cba6f7")
-	Red = lipgloss.Color("#f38ba8")
+	Pink  = lipgloss.Color("#f5c2e7")
+	Mauve = lipgloss.Color("#cba6f7")
+	Red   = lipgloss.Color("#f38ba8")
 	// maroon    = lipgloss.Color("#eba0ac")
 	// peach     = lipgloss.Color("#fab387")
 	Yellow = lipgloss.Color("#f9e2af")
@@ -21,8 +21,8 @@ var (
 	Lavender = lipgloss.Color("#b4befe")
 
 	// Text colors
-	Text = lipgloss.Color("#cdd6f4")
-	// subtext1 = lipgloss.Color("#bac2de")
+	Text     = lipgloss.Color("#cdd6f4")
+	Subtext1 = lipgloss.Color("#bac2de")
 	// subtext0 = lipgloss.Color("#a6adc8")
 	// overlay2 = lipgloss.Color("#9399b2")
 	Overlay1 = lipgloss.Color("#7f849c")
@@ -47,15 +47,15 @@ var (
 
 	HeaderStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(Lavender)
+			Foreground(Text)
 
 	TableHeaderStyle = lipgloss.NewStyle().
 				Bold(true).
 				Align(lipgloss.Left).
-				Foreground(Blue)
+				Foreground(Text)
 
 	RowStyle = lipgloss.NewStyle().
-			Foreground(Text)
+			Foreground(Subtext1)
 
 	SelectedRowStyle = lipgloss.NewStyle().
 				Foreground(Text).
