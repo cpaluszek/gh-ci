@@ -13,7 +13,7 @@ import (
 
 // TODO: fetch workflow with repos to eliminate loading time
 
-type DetailView struct {
+type WorkflowsView struct {
 	BaseView
 	repository            *gh.Repository
 	workflowsWithRuns     []*github.WorkflowWithRuns
@@ -21,9 +21,9 @@ type DetailView struct {
 	selectedRunIndex      int
 }
 
-func NewDetailView(repo *gh.Repository, vp viewport.Model, client *github.Client) DetailView {
+func NewWorkflowsView(repo *gh.Repository, vp viewport.Model, client *github.Client) WorkflowsView {
 	baseView := NewBaseView(vp, client)
-	return DetailView{
+	return WorkflowsView{
 		BaseView:              baseView,
 		repository:            repo,
 		selectedWorkflowIndex: 0,
@@ -31,7 +31,7 @@ func NewDetailView(repo *gh.Repository, vp viewport.Model, client *github.Client
 	}
 }
 
-func (d DetailView) Init() tea.Cmd {
+func (d WorkflowsView) Init() tea.Cmd {
 	d.Loading = true
 	d.Error = nil
 
@@ -42,12 +42,12 @@ func (d DetailView) Init() tea.Cmd {
 	)
 }
 
-func (d DetailView) Update(msg tea.Msg) (DetailView, tea.Cmd) {
+func (d WorkflowsView) Update(msg tea.Msg) (WorkflowsView, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case models.DetailViewMsg:
+	case models.WorkflowsViewMsg:
 		d.Loading = false
 		if msg.Error != nil {
 			d.Error = msg.Error
@@ -100,17 +100,17 @@ func (d DetailView) Update(msg tea.Msg) (DetailView, tea.Cmd) {
 	return d, cmd
 }
 
-func (d DetailView) View() string {
+func (d WorkflowsView) View() string {
 	var content string
 
 	if d.Loading {
 		content = fmt.Sprintf("%s Loading workflows...\n\n", d.Spinner.View())
 	} else {
-		content = render.RenderDetailView(d.repository, d.workflowsWithRuns, d.selectedRunIndex, d.Loading, d.Error)
+		content = render.RenderWorkflowsView(d.repository, d.workflowsWithRuns, d.selectedRunIndex, d.Loading, d.Error)
 	}
 
 	d.Viewport.SetContent(content)
-	statusBar := render.RenderDetailViewStatusBar(d.Loading, d.StatusBarStyle)
+	statusBar := render.RenderWorkflowsStatusBar(d.Loading, d.StatusBarStyle)
 
 	return fmt.Sprintf("%s\n%s", d.Viewport.View(), statusBar)
 }

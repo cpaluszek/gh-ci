@@ -11,17 +11,17 @@ import (
 
 type Model struct {
 	views.BaseView
-	config     *config.Config
-	Client     *github.Client
-	ListView   views.ListView
-	detailView views.DetailView
-	showDetail bool
+	config           *config.Config
+	Client           *github.Client
+	RepositoriesView views.RepositoriesView
+	workflowsView    views.WorkflowsView
+	showWorkflows    bool
 }
 
 func New(cfg *config.Config) *Model {
 	return &Model{
-		config:     cfg,
-		showDetail: false,
+		config:        cfg,
+		showWorkflows: false,
 	}
 }
 
@@ -34,83 +34,82 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		if m.showDetail {
-			detailView, cmd := m.detailView.Update(msg)
-			m.detailView = detailView
+		if m.showWorkflows {
+			workflowsView, cmd := m.workflowsView.Update(msg)
+			m.workflowsView = workflowsView
 			cmds = append(cmds, cmd)
 		} else {
-			listView, cmd := m.ListView.Update(msg)
-			m.ListView = listView
+			repositoryView, cmd := m.RepositoriesView.Update(msg)
+			m.RepositoriesView = repositoryView
 			cmds = append(cmds, cmd)
 		}
 
 	case tea.KeyMsg:
-		if m.showDetail {
-			// Handle key events in detail view
+		if m.showWorkflows {
+			// Handle key events in workflows view
 			switch msg.String() {
 			case "esc", "backspace":
-				m.showDetail = false
+				m.showWorkflows = false
 				return m, nil
 			default:
 				var cmd tea.Cmd
-				m.detailView, cmd = m.detailView.Update(msg)
+				m.workflowsView, cmd = m.workflowsView.Update(msg)
 				cmds = append(cmds, cmd)
 			}
 		} else {
-			// Handle key events in list view
 			switch msg.String() {
 			case "ctrl+c", "q":
 				return m, tea.Quit
 			case "enter":
-				if m.ListView.HasRepositories() {
-					selectedRepo := m.ListView.GetSelectedRepo()
-					m.detailView = views.NewDetailView(selectedRepo, m.ListView.Viewport, m.Client)
-					m.showDetail = true
-					return m, m.detailView.Init()
+				if m.RepositoriesView.HasRepositories() {
+					selectedRepo := m.RepositoriesView.GetSelectedRepo()
+					m.workflowsView = views.NewWorkflowsView(selectedRepo, m.RepositoriesView.Viewport, m.Client)
+					m.showWorkflows = true
+					return m, m.workflowsView.Init()
 				}
 				return m, nil
 			default:
 				var cmd tea.Cmd
-				m.ListView, cmd = m.ListView.Update(msg)
+				m.RepositoriesView, cmd = m.RepositoriesView.Update(msg)
 				cmds = append(cmds, cmd)
 			}
 		}
 
 	case models.ClientInitializedMsg:
 		m.Client = msg.Client
-		m.ListView = views.NewListView(m.Client)
-		return m, m.ListView.Init()
+		m.RepositoriesView = views.NewRepositoriesView(m.Client)
+		return m, m.RepositoriesView.Init()
 
 	case models.RepositoriesMsg:
 		var cmd tea.Cmd
-		m.ListView, cmd = m.ListView.Update(msg)
+		m.RepositoriesView, cmd = m.RepositoriesView.Update(msg)
 		cmds = append(cmds, cmd)
 
-	case models.DetailViewMsg:
-		if m.showDetail {
+	case models.WorkflowsViewMsg:
+		if m.showWorkflows {
 			var cmd tea.Cmd
-			m.detailView, cmd = m.detailView.Update(msg)
+			m.workflowsView, cmd = m.workflowsView.Update(msg)
 			cmds = append(cmds, cmd)
 		}
 
 	case models.ErrMsg:
-		if m.showDetail {
-			m.detailView.Error = msg.Err
-			m.detailView.Loading = false
+		if m.showWorkflows {
+			m.workflowsView.Error = msg.Err
+			m.workflowsView.Loading = false
 		} else {
-			m.ListView.Error = msg.Err
-			m.ListView.Loading = false
+			m.RepositoriesView.Error = msg.Err
+			m.RepositoriesView.Loading = false
 		}
 		return m, nil
 
 	default:
-		if !m.showDetail {
+		if !m.showWorkflows {
 			var cmd tea.Cmd
-			m.ListView, cmd = m.ListView.Update(msg)
+			m.RepositoriesView, cmd = m.RepositoriesView.Update(msg)
 			cmds = append(cmds, cmd)
 		} else {
 			var cmd tea.Cmd
-			m.detailView, cmd = m.detailView.Update(msg)
+			m.workflowsView, cmd = m.workflowsView.Update(msg)
 			cmds = append(cmds, cmd)
 		}
 	}
@@ -123,10 +122,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	if m.showDetail {
-		return m.detailView.View()
+	if m.showWorkflows {
+		return m.workflowsView.View()
 	}
-	return m.ListView.View()
+	return m.RepositoriesView.View()
 }
 
 func (m *Model) Run() error {

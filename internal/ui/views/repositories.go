@@ -12,21 +12,21 @@ import (
 	"github.com/cpaluszek/pipeye/internal/ui/render"
 )
 
-type ListView struct {
+type RepositoriesView struct {
 	BaseView
 	Repositories  []*gh.Repository
 	selectedIndex int
 }
 
-func NewListView(client *github.Client) ListView {
+func NewRepositoriesView(client *github.Client) RepositoriesView {
 	baseView := NewBaseView(viewport.New(0, 0), client)
-	return ListView{
+	return RepositoriesView{
 		BaseView:      baseView,
 		selectedIndex: 0,
 	}
 }
 
-func (l ListView) Init() tea.Cmd {
+func (l RepositoriesView) Init() tea.Cmd {
 	l.Loading = true
 	l.Error = nil
 
@@ -37,7 +37,7 @@ func (l ListView) Init() tea.Cmd {
 	)
 }
 
-func (l ListView) Update(msg tea.Msg) (ListView, tea.Cmd) {
+func (l RepositoriesView) Update(msg tea.Msg) (RepositoriesView, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
@@ -86,7 +86,7 @@ func (l ListView) Update(msg tea.Msg) (ListView, tea.Cmd) {
 	return l, cmd
 }
 
-func (l ListView) View() string {
+func (l RepositoriesView) View() string {
 	if l.Error != nil {
 		return fmt.Sprintf("Error: %v\n\n(press q to quit)", l.Error)
 	}
@@ -102,18 +102,18 @@ func (l ListView) View() string {
 	}
 
 	l.Viewport.SetContent(content)
-	statusBar := render.RenderStatusBar(l.Loading, len(l.Repositories), l.StatusBarStyle)
+	statusBar := render.RenderRepositoriesStatusBar(l.Loading, len(l.Repositories), l.StatusBarStyle)
 
 	return fmt.Sprintf("%s\n%s", l.Viewport.View(), statusBar)
 }
 
-func (l ListView) GetSelectedRepo() *gh.Repository {
+func (l RepositoriesView) GetSelectedRepo() *gh.Repository {
 	if l.selectedIndex >= 0 && l.selectedIndex < len(l.Repositories) {
 		return l.Repositories[l.selectedIndex]
 	}
 	return nil
 }
 
-func (l ListView) HasRepositories() bool {
+func (l RepositoriesView) HasRepositories() bool {
 	return len(l.Repositories) > 0
 }

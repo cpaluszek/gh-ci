@@ -9,6 +9,32 @@ import (
 	gh "github.com/google/go-github/v71/github"
 )
 
+func RenderRepositoriesStatusBar(loading bool, repoCount int, style lipgloss.Style) string {
+	var content string
+
+	if loading {
+		content = "Loading repositories... "
+	} else if repoCount > 0 {
+		content = fmt.Sprintf("%d repositories · ↑/↓: navigate · enter: select · q: quit", repoCount)
+	} else {
+		content = "No repositories found · q: quit"
+	}
+
+	return style.Render(content)
+}
+
+func RenderWorkflowsStatusBar(loading bool, style lipgloss.Style) string {
+	var content string
+
+	if loading {
+		content = "Loading workflow... "
+	} else {
+		content = "↑/↓: navigate · esc/backspace: back to repositories"
+	}
+
+	return style.Render(content)
+}
+
 func RenderRepositoriesTable(repositories []*gh.Repository, selectedIndex int, width int) string {
 	var s strings.Builder
 
@@ -63,20 +89,6 @@ func RenderRepositoriesTable(repositories []*gh.Repository, selectedIndex int, w
 	}
 
 	return s.String()
-}
-
-func RenderStatusBar(loading bool, repoCount int, style lipgloss.Style) string {
-	var content string
-
-	if loading {
-		content = "Loading repositories... "
-	} else if repoCount > 0 {
-		content = fmt.Sprintf("%d repositories · ↑/↓: navigate · enter: select · q: quit", repoCount)
-	} else {
-		content = "No repositories found · q: quit"
-	}
-
-	return style.Render(content)
 }
 
 func calculateColumnWidths(width int) (nameWidth, langWidth, starsWidth, updatedWidth, workflowsWidth int) {

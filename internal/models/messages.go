@@ -19,7 +19,7 @@ type (
 		Error        error
 	}
 
-	DetailViewMsg struct {
+	WorkflowsViewMsg struct {
 		WorkflowsWithRuns []*github.WorkflowWithRuns
 		Error             error
 	}
@@ -40,8 +40,8 @@ func NewRepositoriesMsg(repos []*gh.Repository, err error) RepositoriesMsg {
 	}
 }
 
-func NewDetailViewMsg(workflows []*github.WorkflowWithRuns, err error) DetailViewMsg {
-	return DetailViewMsg{
+func NewWorkflowsViewMsg(workflows []*github.WorkflowWithRuns, err error) WorkflowsViewMsg {
+	return WorkflowsViewMsg{
 		WorkflowsWithRuns: workflows,
 		Error:             err,
 	}
