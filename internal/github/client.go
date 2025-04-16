@@ -26,8 +26,11 @@ type WorkflowRunWithJobs struct {
 }
 
 const (
-	defaultConcurrency = 10
-	defaultTimeout     = 10 * time.Second
+	defaultConcurrency  = 10
+	defaultTimeout      = 10 * time.Second
+	repositoriesPerPage = 20
+	workflowsRunPerPage = 30
+	jobsPerPage         = 10
 )
 
 // TODO: if fetching is used on interval, should use cache for repo workflows
@@ -139,7 +142,7 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 				repo,
 				currentWorkflow.GetID(),
 				&gh.ListWorkflowRunsOptions{
-					ListOptions: gh.ListOptions{PerPage: 20},
+					ListOptions: gh.ListOptions{PerPage: workflowsRunPerPage},
 				},
 			)
 
@@ -175,7 +178,7 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 							repo,
 							currentRun.GetID(),
 							&gh.ListWorkflowJobsOptions{
-								ListOptions: gh.ListOptions{PerPage: 100},
+								ListOptions: gh.ListOptions{PerPage: jobsPerPage},
 							},
 						)
 
@@ -207,7 +210,7 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 // Helper function to fetch repositories
 func (c *Client) fetchRepositories(ctx context.Context) ([]*gh.Repository, error) {
 	opt := &gh.RepositoryListByAuthenticatedUserOptions{
-		ListOptions: gh.ListOptions{PerPage: 20},
+		ListOptions: gh.ListOptions{PerPage: repositoriesPerPage},
 	}
 
 	var allRepos []*gh.Repository
