@@ -106,7 +106,7 @@ func (d WorkflowsView) View() string {
 	if d.Loading {
 		content = fmt.Sprintf("%s Loading workflows...\n\n", d.Spinner.View())
 	} else {
-		content = render.RenderWorkflowsView(d.repository, d.workflowsWithRuns, d.selectedRunIndex, d.Loading, d.Error)
+		content = render.RenderWorkflowsView(d.repository, d.workflowsWithRuns, d.selectedRunIndex, d.Viewport.Width, d.Loading, d.Error)
 	}
 
 	d.Viewport.SetContent(content)

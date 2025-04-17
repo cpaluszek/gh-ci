@@ -23,11 +23,11 @@ func RenderWorkflowsStatusBar(loading bool, style lipgloss.Style) string {
 	return style.Render(content)
 }
 
-func RenderWorkflowsView(repo *gh.Repository, workflowsWithRuns []*github.WorkflowWithRuns, selectedRunIndex int, loading bool, err error) string {
+func RenderWorkflowsView(repo *gh.Repository, workflowsWithRuns []*github.WorkflowWithRuns, selectedRunIndex, width int, loading bool, err error) string {
 	s := &strings.Builder{}
 
 	// Header with repo info
-	s.WriteString(ui.HeaderStyle.Render(fmt.Sprintf("Repository: %s\n\n", *repo.FullName)))
+	s.WriteString(ui.HeaderStyle.Render(fmt.Sprintf("\nRepository: %s\n", *repo.FullName)))
 
 	// Handle errors
 	if err != nil {
@@ -61,7 +61,7 @@ func RenderWorkflowsView(repo *gh.Repository, workflowsWithRuns []*github.Workfl
 		// Render runs if available
 		if len(wwr.Runs) > 0 {
 			s.WriteString("\n\n   Recent Runs:\n")
-			s.WriteString(renderWorkflowRunsTable(wwr.Runs, selectedRunIndex))
+			s.WriteString(renderWorkflowRunsTable(wwr.Runs, selectedRunIndex, width))
 		} else if wwr.Error != nil {
 			s.WriteString("\n\n   " + ui.ErrorTextStyle.Render(
 				fmt.Sprintf("Error loading runs: %v", wwr.Error)))
@@ -79,33 +79,20 @@ func RenderWorkflowsView(repo *gh.Repository, workflowsWithRuns []*github.Workfl
 }
 
 // renderWorkflowRunsTable renders a table of workflow runs
-func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs, selectedRunIndex int) string {
+func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs, selectedRunIndex, width int) string {
 	if len(runsWithJobs) == 0 {
 		return "   No recent runs found."
 	}
 
 	s := &strings.Builder{}
 
-	// Table header
-	s.WriteString("   " + lipgloss.JoinHorizontal(lipgloss.Top,
-		ui.TableHeaderStyle.Width(15).Render("Status"),
-		ui.TableHeaderStyle.Width(10).Render("Branch"),
-		ui.TableHeaderStyle.Width(20).Render("Triggered"),
-		ui.TableHeaderStyle.Width(15).Render("Duration"),
-		ui.TableHeaderStyle.Width(20).Render("Jobs"),
-		ui.TableHeaderStyle.Render("Commit"),
-	) + "\n")
+	headers := []string{"Status", "Branch", "Triggered", "Duration", "Jobs", "Commit"}
+	t := NewStyledTable(headers, width, selectedRunIndex)
 
 	// Table rows
-	for i, runWithJob := range runsWithJobs {
+	for _, runWithJob := range runsWithJobs {
 		run := runWithJob.Run
 
-		var rowStyle lipgloss.Style
-		if i == selectedRunIndex {
-			rowStyle = ui.SelectedRowStyle
-		} else {
-			rowStyle = ui.RowStyle
-		}
 		// Calculate duration
 		var duration string
 		if run.GetUpdatedAt().After(run.GetCreatedAt().Time) {
@@ -122,19 +109,9 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs, selecte
 		}
 
 		commitMsg := run.GetHeadCommit().GetMessage()
-		if len(commitMsg) > 0 {
-			if idx := strings.Index(commitMsg, "\n"); idx > 0 {
-				commitMsg = commitMsg[:idx]
-			}
-			if len(commitMsg) > 57 {
-				commitMsg = commitMsg[:57] + "..."
-			}
-		} else {
-			commitMsg = "-"
-		}
 
 		// Style based on conclusion
-		statusStyle := rowStyle.Width(15)
+		var statusStyle lipgloss.Style
 		status := run.GetStatus()
 		conclusion := run.GetConclusion()
 
@@ -143,14 +120,14 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs, selecte
 			// Use a nested switch for conclusion when status is completed
 			switch conclusion {
 			case "success":
-				statusStyle = statusStyle.Foreground(ui.Green)
+				statusStyle = ui.SuccessStyle
 			case "failure", "timed_out", "startup_failure":
-				statusStyle = statusStyle.Foreground(ui.Red)
+				statusStyle = ui.FailureStyle
 			case "cancelled", "skipped", "neutral":
-				statusStyle = statusStyle.Foreground(ui.Yellow)
+				statusStyle = ui.CanceledStyle
 			}
 		case "in_progress":
-			statusStyle = statusStyle.Foreground(ui.Teal)
+			statusStyle = ui.InProgressStyle
 			status = "running"
 		}
 
@@ -158,36 +135,36 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs, selecte
 		if conclusion != "" && status == "completed" {
 			displayStatus = conclusion
 		}
-		jobHeader := ""
+		jobs := ""
 		for _, job := range runWithJob.Jobs {
-			statusStyle := rowStyle
 			switch job.GetConclusion() {
 			case "success":
-				statusStyle = statusStyle.Foreground(ui.Green)
+				statusStyle = ui.SuccessStyle
 			case "failure":
-				statusStyle = statusStyle.Foreground(ui.Red)
+				statusStyle = ui.FailureStyle
 			case "cancelled":
-				statusStyle = statusStyle.Foreground(ui.Yellow)
+				statusStyle = ui.CanceledStyle
 			}
 
-			jobHeader = lipgloss.JoinHorizontal(
+			jobs = lipgloss.JoinHorizontal(
 				lipgloss.Center,
-				jobHeader,
+				jobs,
 				statusStyle.Render("●"),
-				rowStyle.Render(" "),
 			)
 		}
 
 		// Table row
-		s.WriteString("   " + lipgloss.JoinHorizontal(lipgloss.Top,
+		var row = []string{
 			statusStyle.Render(displayStatus),
-			rowStyle.Width(10).Render(run.GetHeadBranch()),
-			rowStyle.Width(20).Render(formatTime(run.GetCreatedAt().Time)),
-			rowStyle.Width(15).Render(duration),
-			rowStyle.Width(20).Render(jobHeader),
-			rowStyle.Render(commitMsg),
-		) + "\n")
+			ui.RowStyle.Render(run.GetHeadBranch()),
+			ui.RowStyle.Render(formatTime(run.GetCreatedAt().Time)),
+			ui.RowStyle.Render(duration),
+			ui.RowStyle.Render(jobs),
+			ui.RowStyle.Render(commitMsg),
+		}
+		t.Row(row...)
 	}
+	s.WriteString(t.Render())
 
 	return s.String()
 }

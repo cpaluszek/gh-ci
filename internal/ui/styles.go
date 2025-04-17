@@ -53,6 +53,7 @@ var (
 			Foreground(Red).
 			Bold(true)
 
+	// WORKFLOWS
 	ActiveWorkflowStyle = lipgloss.NewStyle().
 				Foreground(Green)
 
@@ -68,4 +69,10 @@ var (
 
 	SelectedRowStyle = RowStyle.
 				Background(Base)
+
+	// JOBS
+	SuccessStyle    = lipgloss.NewStyle().Foreground(Green)
+	FailureStyle    = lipgloss.NewStyle().Foreground(Red)
+	CanceledStyle   = lipgloss.NewStyle().Foreground(Yellow)
+	InProgressStyle = lipgloss.NewStyle().Foreground(Teal)
 )

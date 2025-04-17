@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 	"github.com/cpaluszek/pipeye/internal/ui"
 	gh "github.com/google/go-github/v71/github"
 )
@@ -30,27 +29,7 @@ func RenderRepositoriesTable(repositories []*gh.Repository, selectedIndex int, w
 	s.WriteString("\n\n")
 
 	headers := []string{"Repository", "Language", "Stars", "Last Updated"}
-
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderHeader(true).
-		BorderTop(false).
-		BorderLeft(false).
-		BorderRight(false).
-		BorderBottom(false).
-		BorderColumn(false).
-		Headers(headers...).
-		Width(width).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			switch row {
-			case table.HeaderRow:
-				return ui.TableHeaderStyle
-			case selectedIndex:
-				return ui.SelectedRowStyle
-			default:
-				return ui.RowStyle
-			}
-		})
+	t := NewStyledTable(headers, width, selectedIndex)
 
 	for _, repo := range repositories {
 		language := ""
