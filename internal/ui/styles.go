@@ -32,7 +32,7 @@ var (
 	// surface2 = lipgloss.Color("#585b70")
 	// surface1 = lipgloss.Color("#45475a")
 	// surface0 = lipgloss.Color("#313244")
-	base = lipgloss.Color("#1e1e2e")
+	Base = lipgloss.Color("#1e1e2e")
 	// mantle   = lipgloss.Color("#181825")
 	// crust    = lipgloss.Color("#11111b")
 
@@ -41,26 +41,13 @@ var (
 
 	StatusStyle = lipgloss.NewStyle().
 			Foreground(Text).
-			Background(base).
+			Background(Base).
 			Padding(0, 1).
 			Bold(false)
 
 	HeaderStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(Text)
-
-	TableHeaderStyle = lipgloss.NewStyle().
-				Bold(true).
-				Align(lipgloss.Left).
-				Foreground(Text)
-
-	RowStyle = lipgloss.NewStyle().
-			Foreground(Subtext1)
-
-	SelectedRowStyle = lipgloss.NewStyle().
-				Foreground(Text).
-				Background(base).
-				Bold(true)
 
 	ErrorTextStyle = lipgloss.NewStyle().
 			Foreground(Red).
@@ -71,4 +58,14 @@ var (
 
 	DisabledWorkflowStyle = lipgloss.NewStyle().
 				Foreground(Overlay1)
+
+	// TABLE
+	RowStyle = lipgloss.NewStyle().
+			Foreground(Text).Padding(0, 0, 0, 1)
+
+	TableHeaderStyle = RowStyle.
+				Bold(true)
+
+	SelectedRowStyle = RowStyle.
+				Background(Base)
 )
