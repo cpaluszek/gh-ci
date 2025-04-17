@@ -42,12 +42,14 @@ func RenderRepositoriesTable(repositories []*gh.Repository, selectedIndex int, w
 		Headers(headers...).
 		Width(width).
 		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == table.HeaderRow {
+			switch row {
+			case table.HeaderRow:
 				return ui.TableHeaderStyle
-			} else if row == selectedIndex {
+			case selectedIndex:
 				return ui.SelectedRowStyle
+			default:
+				return ui.RowStyle
 			}
-			return ui.RowStyle
 		})
 
 	for _, repo := range repositories {
