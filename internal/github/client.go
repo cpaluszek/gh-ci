@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"log"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -93,6 +94,9 @@ func (c *Client) FetchRepositoriesWithWorkflows() ([]*gh.Repository, error) {
 
 	wg.Wait()
 	log.Printf("Found %d repositories with workflows in %s", len(result), time.Since(start))
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].UpdatedAt.After(result[j].UpdatedAt.Time)
+	})
 	return result, nil
 }
 
