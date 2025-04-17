@@ -64,6 +64,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.RepositoriesView.HasRepositories() {
 					selectedRepo := m.RepositoriesView.GetSelectedRepo()
 					m.workflowsView = views.NewWorkflowsView(selectedRepo, m.RepositoriesView.Viewport, m.Client)
+					m.workflowsView.UpdateSize(m.RepositoriesView.Viewport.Width, m.RepositoriesView.Viewport.Height)
 					m.showWorkflows = true
 					return m, m.workflowsView.Init()
 				}
