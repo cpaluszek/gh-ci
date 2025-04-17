@@ -34,14 +34,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		repositoryView, _ := m.RepositoriesView.Update(msg)
+		m.RepositoriesView = repositoryView
 		if m.showWorkflows {
-			workflowsView, cmd := m.workflowsView.Update(msg)
+			workflowsView, _ := m.workflowsView.Update(msg)
 			m.workflowsView = workflowsView
-			cmds = append(cmds, cmd)
-		} else {
-			repositoryView, cmd := m.RepositoriesView.Update(msg)
-			m.RepositoriesView = repositoryView
-			cmds = append(cmds, cmd)
 		}
 
 	case tea.KeyMsg:

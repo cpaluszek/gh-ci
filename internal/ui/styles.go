@@ -39,12 +39,6 @@ var (
 	SpinnerStyle = lipgloss.NewStyle().
 			Foreground(Pink)
 
-	StatusStyle = lipgloss.NewStyle().
-			Foreground(Text).
-			Background(Base).
-			Padding(0, 1).
-			Bold(false)
-
 	HeaderStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(Text)
@@ -52,6 +46,15 @@ var (
 	ErrorTextStyle = lipgloss.NewStyle().
 			Foreground(Red).
 			Bold(true)
+
+	// STATUS BAR
+	StatusStyle = lipgloss.NewStyle().
+			Foreground(Text).
+			Background(Base).
+			Padding(0, 1).
+			Bold(false)
+
+	StatusBarHeight = 1
 
 	// WORKFLOWS
 	ActiveWorkflowStyle = lipgloss.NewStyle().

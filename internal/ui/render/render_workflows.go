@@ -146,6 +146,7 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs, selecte
 				statusStyle = ui.CanceledStyle
 			}
 
+			// TODO: style problem with the selected row
 			jobs = lipgloss.JoinHorizontal(
 				lipgloss.Center,
 				jobs,

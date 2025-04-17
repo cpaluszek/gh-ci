@@ -1,8 +1,6 @@
 package views
 
 import (
-	"log"
-
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
@@ -34,8 +32,7 @@ func NewBaseView(vp viewport.Model, client *github.Client) BaseView {
 }
 
 func (b *BaseView) UpdateSize(width, height int) {
-	log.Printf("Updating size: %d x %d", width, height)
 	b.Viewport.Width = width
-	b.Viewport.Height = height - 1 // reserve space for status
+	b.Viewport.Height = height - ui.StatusBarHeight
 	b.StatusBarStyle = ui.StatusStyle.Width(width)
 }
