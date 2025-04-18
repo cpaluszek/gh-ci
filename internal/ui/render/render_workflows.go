@@ -107,7 +107,6 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs, selecte
 
 		switch status {
 		case "completed":
-			// Use a nested switch for conclusion when status is completed
 			switch conclusion {
 			case "success":
 				statusStyle = ui.SuccessStyle
@@ -115,6 +114,8 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs, selecte
 				statusStyle = ui.FailureStyle
 			case "cancelled", "skipped", "neutral":
 				statusStyle = ui.CanceledStyle
+			default:
+				statusStyle = ui.RowStyle
 			}
 		case "in_progress":
 			statusStyle = ui.InProgressStyle
@@ -125,33 +126,30 @@ func renderWorkflowRunsTable(runsWithJobs []*github.WorkflowRunWithJobs, selecte
 		if conclusion != "" && status == "completed" {
 			displayStatus = conclusion
 		}
+
+		var jobStyle lipgloss.Style
 		jobs := ""
 		for _, job := range runWithJob.Jobs {
 			switch job.GetConclusion() {
 			case "success":
-				statusStyle = ui.SuccessStyle
+				jobStyle = ui.SuccessStyle
 			case "failure":
-				statusStyle = ui.FailureStyle
+				jobStyle = ui.FailureStyle
 			case "cancelled":
-				statusStyle = ui.CanceledStyle
+				jobStyle = ui.CanceledStyle
 			}
 
-			// TODO: style problem with the selected row
-			jobs = lipgloss.JoinHorizontal(
-				lipgloss.Center,
-				jobs,
-				statusStyle.Render("●"),
-			)
+			jobs += jobStyle.Render("●")
 		}
 
 		// Table row
 		var row = []string{
 			statusStyle.Render(displayStatus),
-			ui.RowStyle.Render(run.GetHeadBranch()),
-			ui.RowStyle.Render(formatTime(run.GetCreatedAt().Time)),
-			ui.RowStyle.Render(duration),
-			ui.RowStyle.Render(jobs),
-			ui.RowStyle.Render(commitMsg),
+			run.GetHeadBranch(),
+			formatTime(run.GetCreatedAt().Time),
+			duration,
+			jobs,
+			commitMsg,
 		}
 		t.Row(row...)
 	}

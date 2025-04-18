@@ -32,6 +32,7 @@ func NewBaseView(vp viewport.Model, client *github.Client, loading bool) BaseVie
 }
 
 func (b *BaseView) UpdateSize(width, height int) {
+	// TODO: detail view status bar get offset by additional 1
 	b.Viewport.Width = width
 	b.Viewport.Height = height - ui.StatusBarHeight
 	b.StatusBarStyle = ui.StatusStyle.Width(width)
