@@ -15,6 +15,12 @@ type Client struct {
 	Client *gh.Client
 }
 
+type RepositoryData struct {
+	Repository          *gh.Repository
+	WorkflowRunWithJobs []*WorkflowWithRuns
+	Error               error
+}
+
 type WorkflowWithRuns struct {
 	Workflow *gh.Workflow
 	Runs     []*WorkflowRunWithJobs
@@ -30,7 +36,8 @@ const (
 	defaultConcurrency  = 10
 	defaultTimeout      = 10 * time.Second
 	repositoriesPerPage = 20
-	workflowsRunPerPage = 30
+	workflowsPerPage    = 10
+	workflowsRunCount   = 20
 	jobsPerPage         = 10
 )
 
@@ -44,9 +51,11 @@ func NewClient(token string) (*Client, error) {
 }
 
 // FetchRepositoriesWithWorkflows fetches repositories that have GitHub Actions workflows
-func (c *Client) FetchRepositoriesWithWorkflows() ([]*gh.Repository, error) {
+func (c *Client) FetchRepositoriesWithWorkflows() ([]*RepositoryData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
+
+	// TODO: proper error management
 
 	repos, err := c.fetchRepositories(ctx)
 	if err != nil {
@@ -56,7 +65,7 @@ func (c *Client) FetchRepositoriesWithWorkflows() ([]*gh.Repository, error) {
 	start := time.Now()
 	log.Printf("Fetching workflows for %d repositories...\n", len(repos))
 
-	var result []*gh.Repository
+	var result []*RepositoryData
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
 	semaphore := make(chan struct{}, defaultConcurrency)
@@ -85,8 +94,16 @@ func (c *Client) FetchRepositoriesWithWorkflows() ([]*gh.Repository, error) {
 			}
 
 			if workflows != nil && workflows.GetTotalCount() > 0 {
+				owner, repo := ParseFullName(currentRepo.GetFullName())
+				workflowsWithRuns, error := c.FetchWorkflowsWithRuns(owner, repo)
+
+				if error != nil {
+					log.Printf("Error fetching workflows with runs for %s: %v",
+						currentRepo.GetFullName(), error)
+					return
+				}
 				mutex.Lock()
-				result = append(result, currentRepo)
+				result = append(result, &RepositoryData{currentRepo, workflowsWithRuns, nil})
 				mutex.Unlock()
 			}
 		}()
@@ -95,13 +112,14 @@ func (c *Client) FetchRepositoriesWithWorkflows() ([]*gh.Repository, error) {
 	wg.Wait()
 	log.Printf("Found %d repositories with workflows in %s", len(result), time.Since(start))
 	sort.Slice(result, func(i, j int) bool {
-		return result[i].UpdatedAt.After(result[j].UpdatedAt.Time)
+		return result[i].Repository.UpdatedAt.After(result[j].Repository.UpdatedAt.Time)
 	})
 	return result, nil
 }
 
 // FetchWorkflowsWithRuns fetches workflows and their recent runs for a repository
 func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns, error) {
+	// NOTE: use a new context?
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -110,7 +128,7 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 
 	// Fetch workflows
 	workflows, _, err := c.Client.Actions.ListWorkflows(ctx, owner, repo, &gh.ListOptions{
-		PerPage: 100,
+		PerPage: workflowsPerPage,
 	})
 	if err != nil {
 		return nil, err
@@ -146,7 +164,7 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 				repo,
 				currentWorkflow.GetID(),
 				&gh.ListWorkflowRunsOptions{
-					ListOptions: gh.ListOptions{PerPage: workflowsRunPerPage},
+					ListOptions: gh.ListOptions{PerPage: workflowsRunCount},
 				},
 			)
 

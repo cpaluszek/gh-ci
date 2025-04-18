@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/cpaluszek/pipeye/internal/github"
-	gh "github.com/google/go-github/v71/github"
 )
 
 type (
@@ -15,13 +14,13 @@ type (
 	}
 
 	RepositoriesMsg struct {
-		Repositories []*gh.Repository
+		Repositories []*github.RepositoryData
 		Error        error
 	}
 
 	WorkflowsViewMsg struct {
-		WorkflowsWithRuns []*github.WorkflowWithRuns
-		Error             error
+		Repository *github.RepositoryData
+		Error      error
 	}
 )
 
@@ -33,16 +32,9 @@ func NewClientInitializedMsg(client *github.Client) ClientInitializedMsg {
 	return ClientInitializedMsg{Client: client}
 }
 
-func NewRepositoriesMsg(repos []*gh.Repository, err error) RepositoriesMsg {
+func NewRepositoriesMsg(repos []*github.RepositoryData, err error) RepositoriesMsg {
 	return RepositoriesMsg{
 		Repositories: repos,
 		Error:        err,
-	}
-}
-
-func NewWorkflowsViewMsg(workflows []*github.WorkflowWithRuns, err error) WorkflowsViewMsg {
-	return WorkflowsViewMsg{
-		WorkflowsWithRuns: workflows,
-		Error:             err,
 	}
 }

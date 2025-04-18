@@ -27,11 +27,3 @@ func FetchRepositories(client *github.Client) tea.Cmd {
 		}
 	}
 }
-
-func FetchWorkflows(client *github.Client, repoName string) tea.Cmd {
-	return func() tea.Msg {
-		owner, repo := github.ParseFullName(repoName)
-		workflowsWithRuns, err := client.FetchWorkflowsWithRuns(owner, repo)
-		return NewWorkflowsViewMsg(workflowsWithRuns, err)
-	}
-}

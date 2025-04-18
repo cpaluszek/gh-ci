@@ -5,7 +5,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	gh "github.com/google/go-github/v71/github"
 
 	"github.com/cpaluszek/pipeye/internal/github"
 	"github.com/cpaluszek/pipeye/internal/models"
@@ -14,12 +13,12 @@ import (
 
 type RepositoriesView struct {
 	BaseView
-	Repositories  []*gh.Repository
+	Repositories  []*github.RepositoryData
 	selectedIndex int
 }
 
 func NewRepositoriesView(client *github.Client) RepositoriesView {
-	baseView := NewBaseView(viewport.New(0, 0), client)
+	baseView := NewBaseView(viewport.New(0, 0), client, true)
 	return RepositoriesView{
 		BaseView:      baseView,
 		selectedIndex: 0,
@@ -107,7 +106,7 @@ func (l RepositoriesView) View() string {
 	return fmt.Sprintf("%s\n%s", l.Viewport.View(), statusBar)
 }
 
-func (l RepositoriesView) GetSelectedRepo() *gh.Repository {
+func (l RepositoriesView) GetSelectedRepo() *github.RepositoryData {
 	if l.selectedIndex >= 0 && l.selectedIndex < len(l.Repositories) {
 		return l.Repositories[l.selectedIndex]
 	}

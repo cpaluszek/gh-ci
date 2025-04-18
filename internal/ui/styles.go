@@ -2,6 +2,20 @@ package ui
 
 import "github.com/charmbracelet/lipgloss"
 
+type Theme struct {
+	PrimaryText   lipgloss.AdaptiveColor
+	SecondaryText lipgloss.AdaptiveColor
+
+	ErrorText lipgloss.AdaptiveColor
+
+	SelectedBackground lipgloss.AdaptiveColor
+
+	SuccessColor lipgloss.AdaptiveColor
+	FailureColor lipgloss.AdaptiveColor
+	CanceledColor lipgloss.AdaptiveColor
+}
+
+
 // Catppuccin color palette
 var (
 	// Base colors

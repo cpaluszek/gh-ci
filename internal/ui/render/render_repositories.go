@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cpaluszek/pipeye/internal/github"
 	"github.com/cpaluszek/pipeye/internal/ui"
-	gh "github.com/google/go-github/v71/github"
 )
 
 func RenderRepositoriesStatusBar(loading bool, repoCount int, style lipgloss.Style) string {
@@ -23,7 +23,7 @@ func RenderRepositoriesStatusBar(loading bool, repoCount int, style lipgloss.Sty
 	return style.Render(content)
 }
 
-func RenderRepositoriesTable(repositories []*gh.Repository, selectedIndex int, width int) string {
+func RenderRepositoriesTable(repositories []*github.RepositoryData, selectedIndex int, width int) string {
 	var s strings.Builder
 
 	s.WriteString("\n\n")
@@ -31,7 +31,8 @@ func RenderRepositoriesTable(repositories []*gh.Repository, selectedIndex int, w
 	headers := []string{"Repository", "Language", "Stars", "Last Updated"}
 	t := NewStyledTable(headers, width, selectedIndex)
 
-	for _, repo := range repositories {
+	for _, repoData := range repositories {
+		repo := repoData.Repository
 		language := ""
 		if repo.Language != nil {
 			language = *repo.Language

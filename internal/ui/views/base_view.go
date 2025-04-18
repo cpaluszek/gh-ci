@@ -17,7 +17,7 @@ type BaseView struct {
 	StatusBarStyle lipgloss.Style
 }
 
-func NewBaseView(vp viewport.Model, client *github.Client) BaseView {
+func NewBaseView(vp viewport.Model, client *github.Client, loading bool) BaseView {
 	s := spinner.New()
 	s.Spinner = spinner.MiniDot
 	s.Style = ui.SpinnerStyle
@@ -25,7 +25,7 @@ func NewBaseView(vp viewport.Model, client *github.Client) BaseView {
 	return BaseView{
 		Viewport:       vp,
 		Client:         client,
-		Loading:        true,
+		Loading:        loading,
 		Spinner:        s,
 		StatusBarStyle: ui.StatusStyle,
 	}

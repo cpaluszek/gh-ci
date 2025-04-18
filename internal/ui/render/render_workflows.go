@@ -8,23 +8,18 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cpaluszek/pipeye/internal/github"
 	"github.com/cpaluszek/pipeye/internal/ui"
-	gh "github.com/google/go-github/v71/github"
 )
 
-func RenderWorkflowsStatusBar(loading bool, style lipgloss.Style) string {
-	var content string
-
-	if loading {
-		content = "Loading workflow... "
-	} else {
-		content = "↑/↓: navigate · esc/backspace: back to repositories"
-	}
+func RenderWorkflowsStatusBar(style lipgloss.Style) string {
+	content := "↑/↓: navigate · esc/backspace: back to repositories"
 
 	return style.Render(content)
 }
 
-func RenderWorkflowsView(repo *gh.Repository, workflowsWithRuns []*github.WorkflowWithRuns, selectedRunIndex, width int, loading bool, err error) string {
+func RenderWorkflowsView(repoData *github.RepositoryData, selectedRunIndex, width int, err error) string {
 	s := &strings.Builder{}
+	repo := repoData.Repository
+	workflowsWithRuns := repoData.WorkflowRunWithJobs
 
 	// Header with repo info
 	s.WriteString(ui.HeaderStyle.Render(fmt.Sprintf("\nRepository: %s\n", *repo.FullName)))
@@ -33,11 +28,6 @@ func RenderWorkflowsView(repo *gh.Repository, workflowsWithRuns []*github.Workfl
 	if err != nil {
 		s.WriteString(ui.ErrorTextStyle.Render(
 			fmt.Sprintf("Error loading workflows: %v\n", err)))
-		return s.String()
-	}
-
-	if loading {
-		s.WriteString("Loading workflows...\n")
 		return s.String()
 	}
 
