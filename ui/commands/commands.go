@@ -8,12 +8,18 @@ import (
 
 type ClientInitMsg struct {
 	Client *github.Client
-	Error  error
 }
 
 type ConfigInitMsg struct {
 	Config *config.Config
-	Error  error
+}
+
+type RepositoriesMsg struct {
+	Repositories []*github.RepositoryData
+}
+
+type ErrorMsg struct {
+	Error error
 }
 
 // Commands
@@ -21,14 +27,12 @@ type ConfigInitMsg struct {
 func InitConfig() tea.Msg {
 	cfg, err := config.Load()
 	if err != nil {
-		return ConfigInitMsg{
-			Config: nil,
-			Error:  err,
+		return ErrorMsg{
+			Error: err,
 		}
 	}
 	return ConfigInitMsg{
 		Config: cfg,
-		Error:  nil,
 	}
 }
 
@@ -37,14 +41,24 @@ func InitClient(token string) tea.Cmd {
 	return func() tea.Msg {
 		client, err := github.NewClient(token)
 		if err != nil {
-			return ClientInitMsg{
-				Client: nil,
-				Error:  err,
+			return ErrorMsg{
+				Error: err,
 			}
 		}
 		return ClientInitMsg{
 			Client: client,
-			Error:  nil,
+		}
+	}
+}
+
+func FetchRepositories(client *github.Client) tea.Cmd {
+	return func() tea.Msg {
+		repos, err := client.FetchRepositoriesWithWorkflows()
+		if err != nil {
+			return ErrorMsg{Error: err}
+		}
+		return RepositoriesMsg{
+			Repositories: repos,
 		}
 	}
 }

@@ -2,13 +2,15 @@ package ui
 
 import (
 	"log"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/cpaluszek/pipeye/ui/commands"
 	"github.com/cpaluszek/pipeye/ui/components/footer"
+	"github.com/cpaluszek/pipeye/ui/components/reposection"
 	"github.com/cpaluszek/pipeye/ui/context"
+	"github.com/cpaluszek/pipeye/ui/section"
 )
 
 type Model struct {
@@ -16,6 +18,7 @@ type Model struct {
 	ctx     context.Context
 	spinner spinner.Model
 	loading bool
+	repos   section.Section
 }
 
 func NewModel() Model {
@@ -38,6 +41,7 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -45,21 +49,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case commands.ConfigInitMsg:
-		// TODO: handle error
-		if msg.Error != nil {
-			log.Println("Error loading config:", msg.Error)
-			return m, tea.Quit
-		}
 		m.ctx.Config = msg.Config
+		s := reposection.NewModel(m.ctx)
+		m.repos = &s
 		return m, commands.InitClient(m.ctx.Config.Github.Token)
 
 	case commands.ClientInitMsg:
-		if msg.Error != nil {
-			log.Println("Error initializing client:", msg.Error)
-			return m, tea.Quit
-		}
 		m.ctx.Client = msg.Client
 		m.loading = false
+		return m, commands.FetchRepositories(m.ctx.Client)
+
+	case commands.ErrorMsg:
+		log.Println("Error:", msg.Error)
 		return m, nil
 
 	case spinner.TickMsg:
@@ -72,19 +73,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	}
 
-	return m, nil
+	if !m.loading {
+		var sectionCmd tea.Cmd
+		m.repos, sectionCmd = m.repos.Update(msg)
+
+		cmds = append(
+			cmds,
+			sectionCmd,
+		)
+	}
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
-	content := "Welcome to Pipeye!\n"
+	s := strings.Builder{}
+
 	if m.loading {
-		return m.spinner.View() + "\n" + m.footer.View()
+		s.WriteString(m.spinner.View() + "\n")
+	} else {
+		s.WriteString(m.repos.View())
 	}
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		lipgloss.NewStyle().Render(content),
-		m.footer.View(),
-	)
+
+	s.WriteString(m.footer.View())
+	return s.String()
 }
 
 func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
