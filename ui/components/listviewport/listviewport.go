@@ -4,18 +4,22 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cpaluszek/pipeye/ui/constants"
+	"github.com/cpaluszek/pipeye/ui/context"
 )
 
 type Model struct {
+	ctx       *context.Context
 	viewport  viewport.Model
 	NumRows   int
 	currentId int
 }
 
-func NewModel(dimensions constants.Dimensions, numRows int) Model {
+func NewModel(ctx *context.Context, dimensions constants.Dimensions, numRows int) Model {
 	return Model{
-		viewport: viewport.New(dimensions.Width, dimensions.Height),
-		NumRows:  numRows,
+		ctx:       ctx,
+		viewport:  viewport.New(dimensions.Width, dimensions.Height),
+		NumRows:   numRows,
+		currentId: 0,
 	}
 }
 
@@ -48,4 +52,8 @@ func (m *Model) View() string {
 		Width(m.viewport.Width).
 		MaxWidth(m.viewport.Width).
 		Render(viewport)
+}
+
+func (m *Model) UpdateContext(ctx *context.Context) {
+	m.ctx = ctx
 }

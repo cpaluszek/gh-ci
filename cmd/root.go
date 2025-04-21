@@ -8,7 +8,7 @@ import (
 )
 
 func Execute() {
-	// Redirecto logs to a file
+	// Redirect logs to a file
 	f, err := tea.LogToFile("debug.log", "debug")
 	if err != nil {
 		panic(err)

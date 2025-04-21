@@ -1,19 +1,25 @@
 package table
 
 import (
+	"fmt"
+
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cpaluszek/pipeye/ui/components/listviewport"
 	"github.com/cpaluszek/pipeye/ui/constants"
+	"github.com/cpaluszek/pipeye/ui/context"
 )
 
 type Model struct {
+	ctx          *context.Context
 	Rows         []Row
 	Columns      []Column
 	Dimensions   constants.Dimensions
 	rowsViewport listviewport.Model
 	// Empty state
-	// Loading
+	isLoading      bool
+	loadingSpinner spinner.Model
 }
 
 type Row []string
@@ -25,21 +31,62 @@ type Column struct {
 }
 
 func NewModel(
+	ctx *context.Context,
 	dimensions constants.Dimensions,
 	columns []Column,
 	rows []Row,
+	isLoading bool,
 ) Model {
+
+	loadingSpinner := spinner.New()
+	loadingSpinner.Spinner = spinner.MiniDot
+	loadingSpinner.Style = lipgloss.NewStyle()
 	return Model{
-		Rows:         rows,
-		Columns:      columns,
-		Dimensions:   dimensions,
-		rowsViewport: listviewport.NewModel(dimensions, len(rows)),
+		ctx:        ctx,
+		Rows:       rows,
+		Columns:    columns,
+		Dimensions: dimensions,
+		rowsViewport: listviewport.NewModel(
+			ctx,
+			constants.Dimensions{
+				Width:  dimensions.Width,
+				Height: dimensions.Height - constants.TableHeaderHeight,
+			},
+			len(rows),
+		),
+		isLoading:      isLoading,
+		loadingSpinner: loadingSpinner,
 	}
 }
 
-func (m Model) Update() (Model, tea.Cmd) {
-	// TODO: loading
-	return m, nil
+func (m *Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	var cmd tea.Cmd
+	if m.isLoading {
+		m.loadingSpinner, cmd = m.loadingSpinner.Update(msg)
+	}
+	return *m, cmd
+}
+
+func (m Model) StartLoadingSpinner() tea.Cmd {
+	return m.loadingSpinner.Tick
+}
+
+func (m *Model) SetIsLoading(val bool) {
+	m.isLoading = val
+}
+
+func (m Model) IsLoading() bool {
+	return m.isLoading
+}
+
+func (m *Model) SetDimensions(dimensions constants.Dimensions) {
+	m.Dimensions = dimensions
+	m.rowsViewport.SetDimensions(
+		constants.Dimensions{
+			Width:  dimensions.Width,
+			Height: dimensions.Height - constants.TableHeaderHeight,
+		},
+	)
 }
 
 func (m Model) View() string {
@@ -85,9 +132,7 @@ func (m *Model) SyncViewPortContent() {
 	}
 
 	m.rowsViewport.SyncViewPort(
-		lipgloss.NewStyle().
-			Background(lipgloss.Color("3")).
-			Render(lipgloss.JoinVertical(lipgloss.Left, renderedRows...)),
+		lipgloss.JoinVertical(lipgloss.Left, renderedRows...),
 	)
 }
 
@@ -145,17 +190,25 @@ func (m Model) renderHeader() string {
 	return lipgloss.NewStyle().
 		Width(m.Dimensions.Width).
 		MaxWidth(m.Dimensions.Width).
-		Height(m.Dimensions.Height).
-		MaxHeight(m.Dimensions.Height).
+		Height(constants.TableHeaderHeight).
+		MaxHeight(constants.TableHeaderHeight).
 		Render(header)
 }
 
 func (m Model) renderBody() string {
 	bodyStyle := lipgloss.NewStyle().
-		Height(m.Dimensions.Height).
+		Height(m.Dimensions.Height - constants.TableHeaderHeight).
 		MaxWidth(m.Dimensions.Width)
 
-	// TODO: if is loading
+	if m.isLoading {
+		return lipgloss.Place(
+			m.Dimensions.Width,
+			m.Dimensions.Height-constants.TableHeaderHeight,
+			lipgloss.Center,
+			lipgloss.Center,
+			fmt.Sprintf("%s Loading...", m.loadingSpinner.View()),
+		)
+	}
 
 	if len(m.Rows) == 0 {
 		return bodyStyle.Render("No data")
@@ -198,4 +251,9 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 				renderedColumns...,
 			),
 		)
+}
+
+func (m *Model) UpdateContext(ctx *context.Context) {
+	m.ctx = ctx
+	m.rowsViewport.UpdateContext(ctx)
 }

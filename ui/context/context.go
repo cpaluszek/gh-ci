@@ -6,9 +6,11 @@ import (
 )
 
 type Context struct {
-	Config       *config.Config
-	Client       *github.Client
-	Error        error
-	ScreenWidth  int
-	ScreenHeight int
+	Config            *config.Config
+	Client            *github.Client
+	Error             error
+	ScreenWidth       int
+	ScreenHeight      int
+	MainContentWidth  int
+	MainContentHeight int
 }

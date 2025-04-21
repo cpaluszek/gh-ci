@@ -1,20 +1,18 @@
 package section
 
 import (
-	"fmt"
-
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/cpaluszek/pipeye/ui/components/table"
 	"github.com/cpaluszek/pipeye/ui/constants"
 	"github.com/cpaluszek/pipeye/ui/context"
 )
 
 type BaseModel struct {
-	Title   string
-	Ctx     context.Context
-	Table   table.Model
-	Columns []table.Column
+	Title     string
+	Ctx       *context.Context
+	Table     table.Model
+	Columns   []table.Column
+	IsLoading bool
 }
 
 type Component interface {
@@ -25,6 +23,7 @@ type Component interface {
 type Section interface {
 	Table
 	Component
+	UpdateContext(ctx *context.Context)
 }
 
 type Table interface {
@@ -34,12 +33,13 @@ type Table interface {
 	NextRow() int
 	PrevRow() int
 	BuildRows() []table.Row
-	// GetIsLoading() bool
-	// SetIsLoading(val bool)
+	GetIsLoading() bool
+	SetIsLoading(val bool)
+	Fetch() []tea.Cmd
 }
 
 func NewModel(
-	ctx context.Context,
+	ctx *context.Context,
 	title string,
 	columns []table.Column,
 ) BaseModel {
@@ -50,12 +50,14 @@ func NewModel(
 	}
 
 	m.Table = table.NewModel(
+		ctx,
 		constants.Dimensions{
-			Width:  ctx.ScreenWidth,
-			Height: ctx.ScreenHeight,
+			Width:  ctx.MainContentHeight,
+			Height: ctx.MainContentWidth,
 		},
 		columns,
 		nil,
+		false,
 	)
 
 	return m
@@ -73,15 +75,37 @@ func (m *BaseModel) CurrRow() int {
 	return m.Table.GetCurrItem()
 }
 
+func (m *BaseModel) GetIsLoading() bool {
+	return m.IsLoading
+}
+
 func (m *BaseModel) View() string {
-	if m.Table.Rows == nil {
-		return lipgloss.Place(
-			m.Ctx.ScreenWidth,
-			m.Ctx.ScreenHeight,
-			lipgloss.Center,
-			lipgloss.Center,
-			fmt.Sprintf("%s\n\nNo data available", m.Title),
-		)
-	}
+	// if m.Table.Rows == nil {
+	// 	return lipgloss.Place(
+	// 		m.Ctx.ScreenWidth,
+	// 		m.Ctx.ScreenHeight,
+	// 		lipgloss.Center,
+	// 		lipgloss.Center,
+	// 		fmt.Sprintf("%s\n\nNo data available", m.Title),
+	// 	)
+	// }
 	return m.Table.View()
+}
+
+func (m *BaseModel) UpdateContext(ctx *context.Context) {
+	m.Ctx = ctx
+	m.Table.SetDimensions(
+		constants.Dimensions{
+			Width:  ctx.MainContentWidth,
+			Height: ctx.MainContentHeight,
+		},
+	)
+	m.Table.SyncViewPortContent()
+}
+
+func (m *BaseModel) GetDimensions() constants.Dimensions {
+	return constants.Dimensions{
+		Width:  m.Ctx.ScreenWidth,
+		Height: m.Ctx.ScreenHeight,
+	}
 }

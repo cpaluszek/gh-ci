@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/cpaluszek/pipeye/github"
 	"github.com/cpaluszek/pipeye/ui/commands"
 	"github.com/cpaluszek/pipeye/ui/components/table"
@@ -18,7 +17,7 @@ type Model struct {
 	repos []*github.RepositoryData
 }
 
-func NewModel(ctx context.Context) Model {
+func NewModel(ctx *context.Context) Model {
 	base := section.NewModel(
 		ctx,
 		"Repositories",
@@ -53,17 +52,22 @@ func NewModel(ctx context.Context) Model {
 }
 
 func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
-	var cmd tea.Cmd
+	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case commands.RepositoriesMsg:
-		// TODO: is loading false
 		m.repos = msg.Repositories
+		m.SetIsLoading(false)
 		m.Table.SetRows(m.BuildRows())
-
 	}
 
-	return m, cmd
+	table, cmd := m.Table.Update(msg)
+	m.Table = table
+	if cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) BuildRows() []table.Row {
@@ -93,26 +97,41 @@ func (m Model) BuildRows() []table.Row {
 }
 
 func (m *Model) View() string {
-	if m.Table.Rows == nil {
-		d := m.GetDimensions()
-		return lipgloss.Place(
-			d.Width,
-			d.Height,
-			lipgloss.Center,
-			lipgloss.Center,
-			fmt.Sprintf("%s\n\nNo data available", m.Title),
-		)
-	}
 	return m.Table.View()
 }
 
 func (m *Model) GetDimensions() constants.Dimensions {
 	return constants.Dimensions{
-		Width:  m.Ctx.ScreenWidth,
-		Height: m.Ctx.ScreenHeight,
+		Width:  m.Ctx.MainContentWidth,
+		Height: m.Ctx.MainContentHeight,
 	}
 }
 
 func (m *Model) NumRows() int {
 	return len(m.repos)
+}
+
+func (m *Model) SetIsLoading(val bool) {
+	m.IsLoading = val
+	m.Table.SetIsLoading(val)
+}
+
+func (m *Model) UpdateContext(ctx *context.Context) {
+	m.Ctx = ctx
+	m.Table.UpdateContext(ctx)
+	m.Table.SetDimensions(m.GetDimensions())
+	m.Table.SyncViewPortContent()
+}
+
+func (m *Model) Fetch() []tea.Cmd {
+	if m == nil {
+		return nil
+	}
+
+	var cmds []tea.Cmd
+	tableCmd := m.Table.StartLoadingSpinner()
+	fetchCmd := commands.FetchRepositories(m.Ctx.Client)
+	cmds = append(cmds, tableCmd, fetchCmd)
+	m.SetIsLoading(true)
+	return cmds
 }
