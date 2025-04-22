@@ -73,3 +73,6 @@ pipeye/
 │       └── views/        # View components
 ```
 
+## Credits
+
+This project was inspired by [gh-dash](https://github.com/dlvhdr/gh-dash) by [dlvhdr](https://github.com/dlvhdr) - a beautiful CLI dashboard for GitHub.
