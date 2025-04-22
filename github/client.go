@@ -15,23 +15,6 @@ type Client struct {
 	Client *gh.Client
 }
 
-type RepositoryData struct {
-	Repository          *gh.Repository
-	WorkflowRunWithJobs []*WorkflowWithRuns
-	Error               error
-}
-
-type WorkflowWithRuns struct {
-	Workflow *gh.Workflow
-	Runs     []*WorkflowRunWithJobs
-	Error    error
-}
-
-type WorkflowRunWithJobs struct {
-	Run  *gh.WorkflowRun
-	Jobs []*gh.WorkflowJob
-}
-
 const (
 	defaultConcurrency  = 10
 	defaultTimeout      = 10 * time.Second
