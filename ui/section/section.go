@@ -2,10 +2,12 @@ package section
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/cpaluszek/pipeye/github"
 	"github.com/cpaluszek/pipeye/ui/components/table"
 	"github.com/cpaluszek/pipeye/ui/constants"
 	"github.com/cpaluszek/pipeye/ui/context"
+	"github.com/cpaluszek/pipeye/ui/styles"
 )
 
 type BaseModel struct {
@@ -82,7 +84,12 @@ func (m *BaseModel) GetIsLoading() bool {
 }
 
 func (m *BaseModel) View() string {
-	return m.Table.View()
+	return styles.SectionContainerStyle.Render(
+		lipgloss.JoinVertical(
+			lipgloss.Top,
+			m.Table.View(),
+		),
+	)
 }
 
 func (m *BaseModel) UpdateContext(ctx *context.Context) {

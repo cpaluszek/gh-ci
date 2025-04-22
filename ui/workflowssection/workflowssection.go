@@ -11,6 +11,7 @@ import (
 	"github.com/cpaluszek/pipeye/ui/constants"
 	"github.com/cpaluszek/pipeye/ui/context"
 	"github.com/cpaluszek/pipeye/ui/section"
+	"github.com/cpaluszek/pipeye/ui/styles"
 	"github.com/cpaluszek/pipeye/ui/utils"
 )
 
@@ -81,17 +82,8 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *Model) View() string {
-	return m.Table.View()
-}
-
 func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
-	SuccessStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("2"))
-	FailureStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("1"))
-	CanceledStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("3"))
-	InProgressStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("4"))
-
 	selectedWorkflow := m.workflows.WorkflowRunWithJobs[0]
 	for _, runWithJob := range selectedWorkflow.Runs {
 		run := runWithJob.Run
@@ -122,16 +114,16 @@ func (m Model) BuildRows() []table.Row {
 		case "completed":
 			switch conclusion {
 			case "success":
-				statusStyle = SuccessStyle
+				statusStyle = styles.SuccessStyle
 			case "failure", "timed_out", "startup_failure":
-				statusStyle = FailureStyle
+				statusStyle = styles.FailureStyle
 			case "cancelled", "skipped", "neutral":
-				statusStyle = CanceledStyle
+				statusStyle = styles.CanceledStyle
 			default:
-				statusStyle = lipgloss.NewStyle()
+				statusStyle = styles.InProgressStyle
 			}
 		case "in_progress":
-			statusStyle = InProgressStyle
+			statusStyle = styles.InProgressStyle
 			status = "running"
 		}
 
@@ -145,11 +137,11 @@ func (m Model) BuildRows() []table.Row {
 		for _, job := range runWithJob.Jobs {
 			switch job.GetConclusion() {
 			case "success":
-				jobStyle = SuccessStyle
+				jobStyle = styles.SuccessStyle
 			case "failure":
-				jobStyle = FailureStyle
+				jobStyle = styles.FailureStyle
 			case "cancelled":
-				jobStyle = CanceledStyle
+				jobStyle = styles.CanceledStyle
 			}
 
 			jobs += jobStyle.Render("●")

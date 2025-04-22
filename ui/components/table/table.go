@@ -9,6 +9,7 @@ import (
 	"github.com/cpaluszek/pipeye/ui/components/listviewport"
 	"github.com/cpaluszek/pipeye/ui/constants"
 	"github.com/cpaluszek/pipeye/ui/context"
+	"github.com/cpaluszek/pipeye/ui/styles"
 )
 
 type Model struct {
@@ -40,7 +41,7 @@ func NewModel(
 
 	loadingSpinner := spinner.New()
 	loadingSpinner.Spinner = spinner.MiniDot
-	loadingSpinner.Style = lipgloss.NewStyle()
+	loadingSpinner.Style = styles.SpinnerStyle
 	return Model{
 		ctx:        ctx,
 		Rows:       rows,
@@ -162,7 +163,7 @@ func (m Model) renderHeaderColumns() []string {
 
 		if m.Columns[i].Width > 0 {
 
-			renderedColumns[i] = lipgloss.NewStyle().
+			renderedColumns[i] = styles.HeaderStyle.
 				Width(m.Columns[i].Width).
 				MaxWidth(m.Columns[i].Width).
 				Render(m.Columns[i].Title)
@@ -170,7 +171,7 @@ func (m Model) renderHeaderColumns() []string {
 			continue
 		}
 
-		cell := lipgloss.NewStyle().Render(m.Columns[i].Title)
+		cell := styles.HeaderStyle.Render(m.Columns[i].Title)
 		renderedColumns[i] = cell
 		takenWidth += lipgloss.Width(cell)
 	}
@@ -185,7 +186,7 @@ func (m Model) renderHeaderColumns() []string {
 		if !m.Columns[i].Grow {
 			continue
 		}
-		renderedColumns[i] = lipgloss.NewStyle().
+		renderedColumns[i] = styles.HeaderStyle.
 			Width(growWidth).
 			MaxWidth(growWidth).
 			Render(m.Columns[i].Title)
@@ -200,8 +201,7 @@ func (m Model) renderHeader() string {
 		headerColumns...,
 	)
 
-	// TODO: table style
-	return lipgloss.NewStyle().
+	return styles.HeaderStyle.
 		Width(m.Dimensions.Width).
 		MaxWidth(m.Dimensions.Width).
 		Height(constants.TableHeaderHeight).
@@ -236,9 +236,9 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 	var style lipgloss.Style
 
 	if m.rowsViewport.GetCurrItem() == rowId {
-		style = lipgloss.NewStyle().Background(lipgloss.Color("#444444"))
+		style = styles.SelectedRowStyle
 	} else {
-		style = lipgloss.NewStyle()
+		style = styles.RowStyle
 	}
 
 	renderedColumns := make([]string, 0, len(m.Columns))

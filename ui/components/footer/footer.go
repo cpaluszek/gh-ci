@@ -2,7 +2,7 @@ package footer
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/cpaluszek/pipeye/ui/styles"
 )
 
 type Model struct {
@@ -26,11 +26,11 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) View() string {
 	if m.ShowQuitConfirmation {
-		return lipgloss.NewStyle().
+		return styles.StatusBarStyle.
 			Width(m.width).
 			Render(m.quitConfirmation)
 	}
-	return lipgloss.NewStyle().
+	return styles.StatusBarStyle.
 		Width(m.width).
 		Render(m.content)
 }

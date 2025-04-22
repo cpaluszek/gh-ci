@@ -96,10 +96,6 @@ func (m Model) BuildRows() []table.Row {
 	return rows
 }
 
-func (m *Model) View() string {
-	return m.Table.View()
-}
-
 func (m *Model) GetDimensions() constants.Dimensions {
 	return constants.Dimensions{
 		Width:  m.Ctx.MainContentWidth,
