@@ -43,6 +43,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
 			return m, tea.Quit
+		case "j", "down":
+			m.repos.NextRow()
+		case "k", "up":
+			m.repos.PrevRow()
 		}
 	case commands.ConfigInitMsg:
 		m.ctx.Config = msg.Config

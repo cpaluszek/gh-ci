@@ -80,15 +80,6 @@ func (m *BaseModel) GetIsLoading() bool {
 }
 
 func (m *BaseModel) View() string {
-	// if m.Table.Rows == nil {
-	// 	return lipgloss.Place(
-	// 		m.Ctx.ScreenWidth,
-	// 		m.Ctx.ScreenHeight,
-	// 		lipgloss.Center,
-	// 		lipgloss.Center,
-	// 		fmt.Sprintf("%s\n\nNo data available", m.Title),
-	// 	)
-	// }
 	return m.Table.View()
 }
 
