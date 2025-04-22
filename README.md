@@ -19,7 +19,7 @@ git clone https://github.com/cpaluszek/pipeye.git
 cd pipeye
 
 # Build the application
-go build -o pipeye ./cmd/pipeye
+go build -o pipeye .
 
 # Move to a directory in your PATH (optional)
 sudo mv pipeye /usr/local/bin/
