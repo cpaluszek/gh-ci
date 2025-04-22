@@ -37,6 +37,18 @@ func (m *Model) PrevItem() int {
 	return m.currentId
 }
 
+func (m *Model) FirstItem() int {
+	m.currentId = 0
+	m.viewport.GotoTop()
+	return m.currentId
+}
+
+func (m *Model) LastItem() int {
+	m.currentId = m.NumRows - 1
+	m.viewport.GotoBottom()
+	return m.currentId
+}
+
 func (m *Model) GetCurrItem() int {
 	return m.currentId
 }

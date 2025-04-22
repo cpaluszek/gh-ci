@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cpaluszek/pipeye/config"
 	"github.com/cpaluszek/pipeye/github"
@@ -16,6 +18,10 @@ type ConfigInitMsg struct {
 
 type RepositoriesMsg struct {
 	Repositories []*github.RepositoryData
+}
+
+type WorkflowsMsg struct {
+	Workflows *github.RepositoryData
 }
 
 type ErrorMsg struct {
@@ -59,6 +65,20 @@ func FetchRepositories(client *github.Client) tea.Cmd {
 		}
 		return RepositoriesMsg{
 			Repositories: repos,
+		}
+	}
+}
+
+func GoToWorkflow(row github.RowData) tea.Cmd {
+	return func() tea.Msg {
+		workflows, ok := row.(*github.RepositoryData)
+		if !ok {
+			return ErrorMsg{
+				Error: fmt.Errorf("selected row is not a repository"),
+			}
+		}
+		return WorkflowsMsg{
+			Workflows: workflows,
 		}
 	}
 }

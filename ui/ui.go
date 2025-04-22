@@ -10,12 +10,14 @@ import (
 	"github.com/cpaluszek/pipeye/ui/components/reposection"
 	"github.com/cpaluszek/pipeye/ui/context"
 	"github.com/cpaluszek/pipeye/ui/section"
+	"github.com/cpaluszek/pipeye/ui/workflowssection"
 )
 
 type Model struct {
-	footer footer.Model
-	ctx    *context.Context
-	repos  section.Section
+	footer   footer.Model
+	ctx      *context.Context
+	repos    section.Section
+	worflows section.Section
 }
 
 func NewModel() Model {
@@ -28,11 +30,14 @@ func NewModel() Model {
 	}
 	s := reposection.NewModel(m.ctx)
 	m.repos = &s
+	w := workflowssection.NewModel(m.ctx)
+	m.worflows = &w
 
 	return m
 }
 
 func (m Model) Init() tea.Cmd {
+	m.ctx.View = context.RepoView
 	return commands.InitConfig
 }
 
@@ -41,12 +46,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "q", "esc":
+		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "j", "down":
-			m.repos.NextRow()
+			m.GetCurrentSection().NextRow()
 		case "k", "up":
-			m.repos.PrevRow()
+			m.GetCurrentSection().PrevRow()
+		case "enter":
+			switch m.ctx.View {
+			case context.RepoView:
+				repo := m.repos.GetCurrentRow()
+				m.ctx.View = context.WorkflowView
+
+				return m, commands.GoToWorkflow(repo)
+			}
+		case "esc", "backspace":
+			switch m.ctx.View {
+			case context.WorkflowView:
+				m.ctx.View = context.RepoView
+			}
+
 		}
 	case commands.ConfigInitMsg:
 		m.ctx.Config = msg.Config
@@ -65,8 +84,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	}
 
-	m.repos.UpdateContext(m.ctx)
-
 	sectionCmd := m.updateCurrentSection(msg)
 
 	cmds = append(
@@ -80,7 +97,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	s := strings.Builder{}
 
-	s.WriteString(m.repos.View())
+	s.WriteString("\n")
+	currentSection := m.GetCurrentSection()
+	s.WriteString(currentSection.View())
 	s.WriteString("\n")
 
 	s.WriteString(m.footer.View())
@@ -89,16 +108,33 @@ func (m Model) View() string {
 
 func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
 	footerHeight := 1
+	headerHeight := 1
 	m.ctx.ScreenWidth = msg.Width
 	m.ctx.ScreenHeight = msg.Height
 	m.ctx.MainContentWidth = msg.Width
-	m.ctx.MainContentHeight = msg.Height - footerHeight
+	m.ctx.MainContentHeight = msg.Height - footerHeight - headerHeight
 	m.footer.SetWidth(msg.Width)
 }
 
 func (m *Model) updateCurrentSection(msg tea.Msg) (cmd tea.Cmd) {
-	// TODO: get current section
-	m.repos, cmd = m.repos.Update(msg)
+	switch m.ctx.View {
+	case context.RepoView:
+		m.repos.UpdateContext(m.ctx)
+		m.repos, cmd = m.repos.Update(msg)
+	case context.WorkflowView:
+		m.worflows.UpdateContext(m.ctx)
+		m.worflows, cmd = m.worflows.Update(msg)
+	}
 
 	return cmd
+}
+
+func (m *Model) GetCurrentSection() section.Section {
+	switch m.ctx.View {
+	case context.RepoView:
+		return m.repos
+	case context.WorkflowView:
+		return m.worflows
+	}
+	return m.repos
 }

@@ -135,3 +135,10 @@ func (m *Model) Fetch() []tea.Cmd {
 	m.SetIsLoading(true)
 	return cmds
 }
+
+func (m *Model) GetCurrentRow() github.RowData {
+	if len(m.repos) == 0 {
+		return nil
+	}
+	return m.repos[m.Table.GetCurrItem()]
+}

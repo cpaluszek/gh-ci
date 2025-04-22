@@ -114,6 +114,20 @@ func (m *Model) NextItem() int {
 	return currItem
 }
 
+func (m *Model) FirstItem() int {
+	currItem := m.rowsViewport.FirstItem()
+	m.SyncViewPortContent()
+
+	return currItem
+}
+
+func (m *Model) LastItem() int {
+	currItem := m.rowsViewport.LastItem()
+	m.SyncViewPortContent()
+
+	return currItem
+}
+
 func (m *Model) GetCurrItem() int {
 	return m.rowsViewport.GetCurrItem()
 }
@@ -196,10 +210,6 @@ func (m Model) renderHeader() string {
 }
 
 func (m Model) renderBody() string {
-	bodyStyle := lipgloss.NewStyle().
-		Height(m.Dimensions.Height - constants.TableHeaderHeight).
-		MaxWidth(m.Dimensions.Width)
-
 	if m.isLoading {
 		return lipgloss.Place(
 			m.Dimensions.Width,
@@ -211,7 +221,13 @@ func (m Model) renderBody() string {
 	}
 
 	if len(m.Rows) == 0 {
-		return bodyStyle.Render("No data")
+		return lipgloss.Place(
+			m.Dimensions.Width,
+			m.Dimensions.Height-constants.TableHeaderHeight,
+			lipgloss.Center,
+			lipgloss.Center,
+			fmt.Sprintf("%s Loading...", m.loadingSpinner.View()),
+		)
 	}
 	return m.rowsViewport.View()
 }

@@ -2,6 +2,7 @@ package section
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/cpaluszek/pipeye/github"
 	"github.com/cpaluszek/pipeye/ui/components/table"
 	"github.com/cpaluszek/pipeye/ui/constants"
 	"github.com/cpaluszek/pipeye/ui/context"
@@ -28,13 +29,14 @@ type Section interface {
 
 type Table interface {
 	NumRows() int
-	// GetCurrRow() data.RowData
+	GetCurrentRow() github.RowData
 	CurrRow() int
 	NextRow() int
 	PrevRow() int
 	BuildRows() []table.Row
 	GetIsLoading() bool
 	SetIsLoading(val bool)
+	// TODO: if not all section implement this, remove it
 	Fetch() []tea.Cmd
 }
 
