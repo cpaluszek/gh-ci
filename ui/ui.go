@@ -43,11 +43,13 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
-			return m, tea.Quit
+			m.footer, cmd = m.footer.Update(msg)
+			return m, cmd
 		case "j", "down":
 			m.GetCurrentSection().NextRow()
 		case "k", "up":
@@ -86,9 +88,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	sectionCmd := m.updateCurrentSection(msg)
 
+	var footerCmd tea.Cmd
+	m.footer, footerCmd = m.footer.Update(msg)
+
 	cmds = append(
 		cmds,
 		sectionCmd,
+		footerCmd,
 	)
 
 	return m, tea.Batch(cmds...)

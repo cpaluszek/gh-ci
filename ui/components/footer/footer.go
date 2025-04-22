@@ -6,13 +6,17 @@ import (
 )
 
 type Model struct {
-	content string
-	width   int
+	content              string
+	width                int
+	ShowQuitConfirmation bool
+	quitConfirmation     string
 }
 
 func NewModel() Model {
 	return Model{
-		content: " ↑/↓: navigate · enter: select · q: quit",
+		content:              " ↑/↓: navigate · enter: select · q: quit",
+		ShowQuitConfirmation: false,
+		quitConfirmation:     "Press q/esc again to quit",
 	}
 }
 
@@ -21,12 +25,30 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) View() string {
+	if m.ShowQuitConfirmation {
+		return lipgloss.NewStyle().
+			Width(m.width).
+			Render(m.quitConfirmation)
+	}
 	return lipgloss.NewStyle().
 		Width(m.width).
 		Render(m.content)
 }
 
-func (m Model) Update(msg string) (Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "q":
+			if m.ShowQuitConfirmation {
+				return m, tea.Quit
+			} else {
+				m.ShowQuitConfirmation = true
+			}
+		default:
+			m.ShowQuitConfirmation = false
+		}
+	}
 	return m, nil
 }
 
