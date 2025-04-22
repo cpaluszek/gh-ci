@@ -6,8 +6,18 @@ A terminal UI application for monitoring your GitHub Actions workflows and runs.
 
 - 🔍 Browse your GitHub repositories with Actions workflows
 - 📊 View workflows and their recent runs
-- 🔄 Monitor run status in real-time with visual indicators
-- 👁️ See job status and details for each workflow run
+- 🔄 Monitor run status in real-time with visual indicators (WIP)
+- 👁️ See job status and details for each workflow run (WIP)
+
+## Requirements
+
+### Fonts
+Pipeye uses Nerd Font icons for workflow and job status indicators. For the best experience:
+
+1. Install a [Nerd Font](https://www.nerdfonts.com/font-downloads) compatible font of your choice
+2. Configure your terminal to use the installed Nerd Font
+
+Without a Nerd Font, the status icons will appear as placeholder characters or missing glyphs.
 
 ## Installation
 

@@ -19,8 +19,8 @@ const (
 	defaultConcurrency  = 10
 	defaultTimeout      = 10 * time.Second
 	repositoriesPerPage = 20
-	workflowsPerPage    = 10
-	workflowsRunCount   = 20
+	workflowsPerPage    = 20
+	workflowsRunCount   = 30
 	jobsPerPage         = 10
 )
 

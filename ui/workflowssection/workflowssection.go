@@ -2,9 +2,9 @@ package workflowssection
 
 import (
 	"fmt"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/cpaluszek/pipeye/github"
 	"github.com/cpaluszek/pipeye/ui/commands"
 	"github.com/cpaluszek/pipeye/ui/components/table"
@@ -105,51 +105,36 @@ func (m Model) BuildRows() []table.Row {
 
 		commitMsg := run.GetHeadCommit().GetMessage()
 
-		// Style based on conclusion
-		var statusStyle lipgloss.Style
+		// Get status info
 		status := run.GetStatus()
 		conclusion := run.GetConclusion()
 
-		switch status {
-		case "completed":
-			switch conclusion {
-			case "success":
-				statusStyle = styles.SuccessStyle
-			case "failure", "timed_out", "startup_failure":
-				statusStyle = styles.FailureStyle
-			case "cancelled", "skipped", "neutral":
-				statusStyle = styles.CanceledStyle
-			default:
-				statusStyle = styles.InProgressStyle
-			}
-		case "in_progress":
-			statusStyle = styles.InProgressStyle
-			status = "running"
-		}
+		// Get the appropriate symbol and style
+		statusSymbol := styles.GetStatusSymbol(status, conclusion)
 
-		displayStatus := status
+		// Format the status display with the symbol
+		displayStatus := statusSymbol
 		if conclusion != "" && status == "completed" {
-			displayStatus = conclusion
+			displayStatus = statusSymbol + " " + conclusion
+		} else if status == "in_progress" {
+			displayStatus = statusSymbol + " running"
+		} else {
+			displayStatus = statusSymbol + " " + status
 		}
 
-		var jobStyle lipgloss.Style
+		displayStatus = utils.CleanANSIEscapes(displayStatus)
+
+		// Build jobs indicators with symbols
 		jobs := ""
 		for _, job := range runWithJob.Jobs {
-			switch job.GetConclusion() {
-			case "success":
-				jobStyle = styles.SuccessStyle
-			case "failure":
-				jobStyle = styles.FailureStyle
-			case "cancelled":
-				jobStyle = styles.CanceledStyle
-			}
-
-			jobs += jobStyle.Render("●")
+			jobs += styles.GetJobStatusSymbol(job.GetConclusion())
+			jobs = utils.CleanANSIEscapes(jobs)
+			jobs = strings.Replace(jobs, "\x1b[0m", "", -1)
 		}
 
 		// Table row
 		rows = append(rows, table.Row{
-			statusStyle.Render(displayStatus),
+			displayStatus,
 			run.GetHeadBranch(),
 			utils.FormatTime(run.GetCreatedAt().Time),
 			duration,

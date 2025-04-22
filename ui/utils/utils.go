@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -31,4 +32,13 @@ func pluralize(n int) string {
 		return ""
 	}
 	return "s"
+}
+
+// CleanANSIEscapes removes ANSI reset sequences that cause rendering issues
+// with lipgloss styled content when combined with other styles.
+// This works around https://github.com/charmbracelet/lipgloss/issues/144
+// where nested or adjacent styled content can have their styles reset
+// by the automatic reset sequence (\x1b[0m) that lipgloss adds.
+func CleanANSIEscapes(s string) string {
+	return strings.Replace(s, "\x1b[0m", "", -1)
 }
