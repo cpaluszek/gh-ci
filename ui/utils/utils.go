@@ -40,5 +40,5 @@ func pluralize(n int) string {
 // where nested or adjacent styled content can have their styles reset
 // by the automatic reset sequence (\x1b[0m) that lipgloss adds.
 func CleanANSIEscapes(s string) string {
-	return strings.Replace(s, "\x1b[0m", "", -1)
+	return strings.ReplaceAll(s, "\x1b[0m", "")
 }

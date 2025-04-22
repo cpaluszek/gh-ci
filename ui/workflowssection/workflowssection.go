@@ -2,7 +2,6 @@ package workflowssection
 
 import (
 	"fmt"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cpaluszek/pipeye/github"
@@ -113,7 +112,7 @@ func (m Model) BuildRows() []table.Row {
 		statusSymbol := styles.GetStatusSymbol(status, conclusion)
 
 		// Format the status display with the symbol
-		displayStatus := statusSymbol
+		displayStatus := ""
 		if conclusion != "" && status == "completed" {
 			displayStatus = statusSymbol + " " + conclusion
 		} else if status == "in_progress" {
@@ -128,9 +127,8 @@ func (m Model) BuildRows() []table.Row {
 		jobs := ""
 		for _, job := range runWithJob.Jobs {
 			jobs += styles.GetJobStatusSymbol(job.GetConclusion())
-			jobs = utils.CleanANSIEscapes(jobs)
-			jobs = strings.Replace(jobs, "\x1b[0m", "", -1)
 		}
+		jobs = utils.CleanANSIEscapes(jobs)
 
 		// Table row
 		rows = append(rows, table.Row{
