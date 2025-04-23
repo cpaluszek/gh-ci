@@ -2,72 +2,63 @@ package styles
 
 import "github.com/charmbracelet/lipgloss"
 
-// Color definitions
-const (
-	// ANSI colors
-	BlackANSI        = lipgloss.Color("0")
-	RedANSI          = lipgloss.Color("1")
-	GreenANSI        = lipgloss.Color("2")
-	YellowANSI       = lipgloss.Color("3")
-	BlueANSI         = lipgloss.Color("4")
-	MagentaANSI      = lipgloss.Color("5")
-	CyanANSI         = lipgloss.Color("6")
-	WhiteANSI        = lipgloss.Color("7")
-	GrayANSI         = lipgloss.Color("8")
-	LightGrayANSI    = lipgloss.Color("7")
-	LightRedANSI     = lipgloss.Color("9")
-	LightGreenANSI   = lipgloss.Color("10")
-	LightYellowANSI  = lipgloss.Color("11")
-	LightBlueANSI    = lipgloss.Color("12")
-	LightMagentaANSI = lipgloss.Color("13")
-	LightCyanANSI    = lipgloss.Color("14")
-	LightWhiteANSI   = lipgloss.Color("15")
+var (
+	PrimaryBorder = lipgloss.AdaptiveColor{Light: "013", Dark: "008"}
+	SecondaryBorder = lipgloss.AdaptiveColor{Light: "008", Dark: "007"}
+
+	SelectedBackground = lipgloss.AdaptiveColor{Light: "006", Dark: "008"}
+
+	PrimaryText = lipgloss.AdaptiveColor{Light: "000", Dark: "015"}
+	SecondaryText = lipgloss.AdaptiveColor{Light: "244", Dark: "251"}
+	FaintText = lipgloss.AdaptiveColor{Light: "007", Dark: "254"}
+
+	SuccessText = lipgloss.AdaptiveColor{Light: "002", Dark: "002"}
+	WarningText = lipgloss.AdaptiveColor{Light: "003", Dark: "003"}
+	ErrorText = lipgloss.AdaptiveColor{Light: "001", Dark: "001"}
+
+	SuccessColor = SuccessText
+	WarningColor = WarningText
+	ErrorColor = ErrorText
+	InProgressColor = lipgloss.AdaptiveColor{Light: "077", Dark: "077"}
+	SkippedColor = FaintText
 )
 
 // Common styles
 var (
-	SpinnerStyle = lipgloss.NewStyle().
-			Foreground(MagentaANSI)
+	SpinnerStyle = lipgloss.NewStyle().Bold(true).Padding(0, 1)
 
 	HeaderStyle = lipgloss.NewStyle().
-			Bold(true).
-			Border(lipgloss.NormalBorder()).
-			BorderForeground(WhiteANSI).
-			BorderBottom(true).
-			BorderTop(false).
-			BorderLeft(false).
-			BorderRight(false)
+		Bold(true).
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(PrimaryBorder).
+		BorderBottom(true).
+		BorderTop(false).
+		BorderLeft(false).
+		BorderRight(false)
 
 	ErrorTextStyle = lipgloss.NewStyle().
-			Foreground(RedANSI).
-			Bold(true)
+		Foreground(ErrorText).
+		Bold(true)
 
 	StatusBarStyle = lipgloss.NewStyle().
-			Background(BlackANSI).
-			Padding(0, 1).
-			Bold(false)
+		Background(SelectedBackground).
+		Padding(0, 1)
 
-	ActiveWorkflowStyle = lipgloss.NewStyle().
-				Foreground(GreenANSI)
-
-	DisabledWorkflowStyle = lipgloss.NewStyle().
-				Foreground(LightGrayANSI)
+	TableHeaderStyle = RowStyle.
+		Bold(true)
 
 	RowStyle = lipgloss.NewStyle()
 
-	TableHeaderStyle = RowStyle.
-				Bold(true)
-
-	SelectedRowStyle = RowStyle.
-				Background(BlackANSI)
+	SelectedRowStyle = RowStyle.Background(SelectedBackground)
 
 	SectionContainerStyle = lipgloss.NewStyle().Padding(0, 1)
 
-	SuccessStyle    = lipgloss.NewStyle().Foreground(GreenANSI)
-	FailureStyle    = lipgloss.NewStyle().Foreground(RedANSI)
-	CanceledStyle   = lipgloss.NewStyle().Foreground(YellowANSI)
-	InProgressStyle = lipgloss.NewStyle().Foreground(BlueANSI)
-	SkippedStyle    = lipgloss.NewStyle().Foreground(LightGrayANSI)
+	SuccessStyle    = lipgloss.NewStyle().Foreground(SuccessColor)
+	FailureStyle    = lipgloss.NewStyle().Foreground(ErrorColor)
+	CanceledStyle   = lipgloss.NewStyle().Foreground(WarningColor)
+	InProgressStyle = lipgloss.NewStyle().Foreground(InProgressColor)
+	SkippedStyle    = lipgloss.NewStyle().Foreground(SkippedColor)
+	DefaultStyle    = lipgloss.NewStyle().Foreground(PrimaryText)
 )
 
 // TODO: add plain text fallback
@@ -83,15 +74,14 @@ const (
 	QueuedSymbol     = "󰥔 "
 
 	// Job status dot variants
-	JobSuccessDot    = "󰄯"
-	JobFailureDot    = "󰅙"
-	JobCanceledDot   = "󰅚"
-	JobSkippedDot    = "○"
-	JobInProgressDot = "◌"
+	JobSuccessDot    = "󰄯 "
+	JobFailureDot    = "󰅙 "
+	JobCanceledDot   = "󰅚 "
+	JobSkippedDot    = "○ "
+	JobInProgressDot = "◌ "
 )
 
 func GetStatusSymbol(status, conclusion string) string {
-	// TODO: add style
 	switch status {
 	case "completed":
 		switch conclusion {
@@ -104,16 +94,16 @@ func GetStatusSymbol(status, conclusion string) string {
 		case "skipped":
 			return SkippedStyle.Render(SkippedSymbol)
 		case "neutral":
-			return lipgloss.NewStyle().Render(NeutralSymbol)
+			return DefaultStyle.Render(NeutralSymbol)
 		default:
-			return lipgloss.NewStyle().Render(NeutralSymbol)
+			return DefaultStyle.Render(NeutralSymbol)
 		}
 	case "in_progress":
-		return lipgloss.NewStyle().Render(InProgressSymbol)
+		return InProgressStyle.Render(InProgressSymbol)
 	case "queued":
-		return lipgloss.NewStyle().Render(QueuedSymbol)
+		return InProgressStyle.Render(QueuedSymbol)
 	default:
-		return lipgloss.NewStyle().Render(NeutralSymbol)
+		return DefaultStyle.Render(NeutralSymbol)
 	}
 }
 
@@ -128,8 +118,8 @@ func GetJobStatusSymbol(conclusion string) string {
 	case "skipped":
 		return SkippedStyle.Render(JobSkippedDot)
 	case "in_progress":
-		return lipgloss.NewStyle().Render(JobInProgressDot)
+		return DefaultStyle.Render(JobInProgressDot)
 	default:
-		return lipgloss.NewStyle().Render(JobSkippedDot)
+		return DefaultStyle.Render(JobSkippedDot)
 	}
 }
