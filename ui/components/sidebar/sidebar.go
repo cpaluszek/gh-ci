@@ -44,7 +44,7 @@ func (m Model) View() string {
 
 	if m.data == "" {
 		return style.Align(lipgloss.Center).Render(
-			lipgloss.PlaceVertical(height, lipgloss.Center, "No data...."),
+			lipgloss.PlaceVertical(height, lipgloss.Center, ""),
 		)
 	}
 
@@ -88,6 +88,8 @@ func (m *Model) GenerateRepoSidebarContent(repo *github.RepositoryData) {
 				"",
 			)
 		}
+	} else {
+		content = append(content, styles.DefaultStyle.Render("No workflows found"))
 	}
 
 	if len(repo.WorkflowRunWithJobs) == 0 {
