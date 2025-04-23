@@ -24,6 +24,8 @@ type WorkflowsMsg struct {
 	Workflows *github.RepositoryData
 }
 
+type SectionChangedMsg struct{}
+
 type ErrorMsg struct {
 	Error error
 }
@@ -55,6 +57,10 @@ func InitClient(token string) tea.Cmd {
 			Client: client,
 		}
 	}
+}
+
+func SectionChanged() tea.Msg {
+	return SectionChangedMsg{}
 }
 
 func FetchRepositories(client *github.Client) tea.Cmd {

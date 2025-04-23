@@ -68,6 +68,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		m.workflows = msg.Workflows
 		m.Table.SetRows(m.BuildRows())
 		m.Table.FirstItem()
+		cmds = append(cmds, commands.SectionChanged)
 	}
 
 	table, cmd := m.Table.Update(msg)

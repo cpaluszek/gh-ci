@@ -75,6 +75,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.ctx.View {
 			case context.WorkflowView:
 				m.ctx.View = context.RepoView
+				m.OnSelectedRowChanged()
 			}
 
 		}
@@ -85,6 +86,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case commands.ClientInitMsg:
 		m.ctx.Client = msg.Client
 		cmds = append(cmds, m.repos.Fetch()...)
+
+	case commands.SectionChangedMsg:
+		m.OnSelectedRowChanged()
 
 	case commands.ErrorMsg:
 		log.Println("Error:", msg.Error)
@@ -174,12 +178,13 @@ func (m *Model) OnSelectedRowChanged() {
 		m.sidebar.SetContent("")
 	}
 
-	if m.ctx.View == context.RepoView {
-		if repo, ok := m.repos.GetCurrentRow().(*github.RepositoryData); ok {
+	switch m.ctx.View {
+	case context.RepoView:
+		if repo, ok := currentRow.(*github.RepositoryData); ok {
 			m.sidebar.GenerateRepoSidebarContent(repo)
 		}
-	} else if m.ctx.View == context.WorkflowView {
-		if workflowRun, ok := m.worflows.GetCurrentRow().(*github.WorkflowRunWithJobs); ok {
+	case context.WorkflowView:
+		if workflowRun, ok := currentRow.(*github.WorkflowRunWithJobs); ok {
 			m.sidebar.GenerateWorkflowSidebarContent(workflowRun)
 		}
 	}
