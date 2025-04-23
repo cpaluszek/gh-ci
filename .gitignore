@@ -25,3 +25,4 @@ go.work.sum
 .env
 config.yaml
 debug.log
+data.log
