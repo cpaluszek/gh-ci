@@ -89,9 +89,13 @@ const (
 	// Job status dot variants
 	JobSuccessDot    = "󰄯 "
 	JobFailureDot    = "󰅙 "
-	JobCanceledDot   = "󰅚 "
-	JobSkippedDot    = "○ "
-	JobInProgressDot = "◌ "
+	JobCanceledDot   = " "
+	JobSkippedDot    = " "
+	JobInProgressDot = "󱥸 "
+
+	PullRequestSymbol = " "
+	PushSymbol        = " "
+	ScheduleSymbol    = "󰃰 "
 )
 
 func GetStatusSymbol(status, conclusion string) string {

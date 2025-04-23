@@ -14,8 +14,6 @@ import (
 	"github.com/cpaluszek/pipeye/ui/constants"
 	"github.com/cpaluszek/pipeye/ui/context"
 	"github.com/cpaluszek/pipeye/ui/section"
-	"github.com/cpaluszek/pipeye/ui/styles"
-	"github.com/cpaluszek/pipeye/ui/utils"
 	"github.com/cpaluszek/pipeye/ui/workflowssection"
 )
 
@@ -176,51 +174,13 @@ func (m *Model) OnSelectedRowChanged() {
 		m.sidebar.SetContent("")
 	}
 
-	var content string
 	if m.ctx.View == context.RepoView {
 		if repo, ok := m.repos.GetCurrentRow().(*github.RepositoryData); ok {
-			content = m.generateRepoSidebarContent(repo)
+			m.sidebar.GenerateRepoSidebarContent(repo)
 		}
 	} else if m.ctx.View == context.WorkflowView {
 		if workflowRun, ok := m.worflows.GetCurrentRow().(*github.WorkflowRunWithJobs); ok {
-			content = m.generateWorkflowSidebarContent(workflowRun)
+			m.sidebar.GenerateWorkflowSidebarContent(workflowRun)
 		}
 	}
-
-	m.sidebar.SetContent(content)
-}
-
-func (m *Model) generateRepoSidebarContent(repo *github.RepositoryData) string {
-	content := []string{
-		styles.TitleStyle.Render("Repository: " + *repo.Repository.FullName),
-		"",
-	}
-
-	if len(repo.WorkflowRunWithJobs) > 0 && len(repo.WorkflowRunWithJobs[0].Runs) > 0 {
-		for i := range repo.WorkflowRunWithJobs {
-			workflow := repo.WorkflowRunWithJobs[i]
-			content = append(content, styles.TitleStyle.Render("Workflow: "+*workflow.Workflow.Name))
-
-			latestRun := workflow.Runs[0].Run
-			content = append(content,
-				styles.DefaultStyle.Render("Status: "+utils.GetWorkflowRunStatus(latestRun)),
-				styles.DefaultStyle.Render("Duration: "+utils.GetWorkflowRunDuration(latestRun)),
-				styles.DefaultStyle.Render("Event: "+latestRun.GetEvent()),
-				styles.DefaultStyle.Render("Commit: "+latestRun.GetHeadCommit().GetMessage()),
-				styles.DefaultStyle.Render("Created at: "+utils.FormatTime(latestRun.GetCreatedAt().Time)),
-				"",
-			)
-		}
-	}
-
-	if len(repo.WorkflowRunWithJobs) == 0 {
-		content = append(content, styles.DefaultStyle.Render("No workflows found"))
-	}
-
-	return lipgloss.JoinVertical(lipgloss.Left, content...)
-}
-
-func (m *Model) generateWorkflowSidebarContent(workflow *github.WorkflowRunWithJobs) string {
-	// TODO: Add workflow details
-	return workflow.GetName()
 }

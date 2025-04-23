@@ -88,3 +88,30 @@ func GetWorkflowRunStatus(wr *gh.WorkflowRun) string {
 
 	return CleanANSIEscapes(content)
 }
+
+func GetJobDuration(job *gh.WorkflowJob) string {
+	if job == nil {
+		return ""
+	}
+	var duration string
+	if job.GetCompletedAt().After(job.GetCreatedAt().Time) {
+		durationTime := job.GetCompletedAt().Sub(job.GetStartedAt().Time)
+		duration = formatDuration(durationTime)
+	} else {
+		duration = "running"
+	}
+	return duration
+}
+
+func GetRunEventIcon(event string) string {
+	switch event {
+	case "pull_request":
+		return styles.PullRequestSymbol
+	case "push":
+		return styles.PushSymbol
+	case "schedule":
+		return styles.ScheduleSymbol
+	default:
+		return ""
+	}
+}
