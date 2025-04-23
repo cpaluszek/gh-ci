@@ -1,8 +1,6 @@
 package workflowssection
 
 import (
-	"fmt"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cpaluszek/pipeye/github"
 	"github.com/cpaluszek/pipeye/ui/commands"
@@ -87,41 +85,11 @@ func (m Model) BuildRows() []table.Row {
 	for _, runWithJob := range selectedWorkflow.Runs {
 		run := runWithJob.Run
 
-		// Calculate duration
-		var duration string
-		if run.GetUpdatedAt().After(run.GetCreatedAt().Time) {
-			durationTime := run.GetUpdatedAt().Sub(run.GetCreatedAt().Time)
-			if durationTime.Hours() >= 1 {
-				duration = fmt.Sprintf("%.1fh", durationTime.Hours())
-			} else if durationTime.Minutes() >= 1 {
-				duration = fmt.Sprintf("%.1fm", durationTime.Minutes())
-			} else {
-				duration = fmt.Sprintf("%.1fs", durationTime.Seconds())
-			}
-		} else {
-			duration = "running"
-		}
+		duration := utils.GetWorkflowRunDuration(run)
 
 		commitMsg := run.GetHeadCommit().GetMessage()
 
-		// Get status info
-		status := run.GetStatus()
-		conclusion := run.GetConclusion()
-
-		// Get the appropriate symbol and style
-		statusSymbol := styles.GetStatusSymbol(status, conclusion)
-
-		// Format the status display with the symbol
-		displayStatus := ""
-		if conclusion != "" && status == "completed" {
-			displayStatus = statusSymbol + " " + conclusion
-		} else if status == "in_progress" {
-			displayStatus = statusSymbol + " running"
-		} else {
-			displayStatus = statusSymbol + " " + status
-		}
-
-		displayStatus = utils.CleanANSIEscapes(displayStatus)
+		displayStatus := utils.GetWorkflowRunStatus(run)
 
 		// Build jobs indicators with symbols
 		jobs := ""

@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cpaluszek/pipeye/github"
 	"github.com/cpaluszek/pipeye/ui/commands"
 	"github.com/cpaluszek/pipeye/ui/components/footer"
 	"github.com/cpaluszek/pipeye/ui/components/reposection"
@@ -13,6 +14,8 @@ import (
 	"github.com/cpaluszek/pipeye/ui/constants"
 	"github.com/cpaluszek/pipeye/ui/context"
 	"github.com/cpaluszek/pipeye/ui/section"
+	"github.com/cpaluszek/pipeye/ui/styles"
+	"github.com/cpaluszek/pipeye/ui/utils"
 	"github.com/cpaluszek/pipeye/ui/workflowssection"
 )
 
@@ -21,7 +24,7 @@ type Model struct {
 	ctx      *context.Context
 	repos    section.Section
 	worflows section.Section
-	sidebar sidebar.Model
+	sidebar  sidebar.Model
 }
 
 func NewModel() Model {
@@ -58,8 +61,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		case "j", "down":
 			m.GetCurrentSection().NextRow()
+			m.OnSelectedRowChanged()
 		case "k", "up":
 			m.GetCurrentSection().PrevRow()
+			m.OnSelectedRowChanged()
 		case "enter":
 			switch m.ctx.View {
 			case context.RepoView:
@@ -115,7 +120,7 @@ func (m Model) View() string {
 		lipgloss.Top,
 		m.GetCurrentSection().View(),
 		m.sidebar.View(),
-		)
+	)
 
 	s.WriteString(content)
 	s.WriteString("\n")
@@ -155,4 +160,67 @@ func (m *Model) GetCurrentSection() section.Section {
 		return m.worflows
 	}
 	return m.repos
+}
+
+func (m *Model) OnSelectedRowChanged() {
+	switch m.ctx.View {
+	case context.RepoView:
+		m.repos.GetCurrentRow()
+	case context.WorkflowView:
+		m.worflows.GetCurrentRow()
+	}
+
+	// Sidebar sync
+	currentRow := m.GetCurrentSection().GetCurrentRow()
+	if currentRow == nil {
+		m.sidebar.SetContent("")
+	}
+
+	var content string
+	if m.ctx.View == context.RepoView {
+		if repo, ok := m.repos.GetCurrentRow().(*github.RepositoryData); ok {
+			content = m.generateRepoSidebarContent(repo)
+		}
+	} else if m.ctx.View == context.WorkflowView {
+		if workflowRun, ok := m.worflows.GetCurrentRow().(*github.WorkflowRunWithJobs); ok {
+			content = m.generateWorkflowSidebarContent(workflowRun)
+		}
+	}
+
+	m.sidebar.SetContent(content)
+}
+
+func (m *Model) generateRepoSidebarContent(repo *github.RepositoryData) string {
+	content := []string{
+		styles.TitleStyle.Render("Repository: " + *repo.Repository.FullName),
+		"",
+	}
+
+	if len(repo.WorkflowRunWithJobs) > 0 && len(repo.WorkflowRunWithJobs[0].Runs) > 0 {
+		for i := range repo.WorkflowRunWithJobs {
+			workflow := repo.WorkflowRunWithJobs[i]
+			content = append(content, styles.TitleStyle.Render("Workflow: "+*workflow.Workflow.Name))
+
+			latestRun := workflow.Runs[0].Run
+			content = append(content,
+				styles.DefaultStyle.Render("Status: "+utils.GetWorkflowRunStatus(latestRun)),
+				styles.DefaultStyle.Render("Duration: "+utils.GetWorkflowRunDuration(latestRun)),
+				styles.DefaultStyle.Render("Event: "+latestRun.GetEvent()),
+				styles.DefaultStyle.Render("Commit: "+latestRun.GetHeadCommit().GetMessage()),
+				styles.DefaultStyle.Render("Created at: "+utils.FormatTime(latestRun.GetCreatedAt().Time)),
+				"",
+			)
+		}
+	}
+
+	if len(repo.WorkflowRunWithJobs) == 0 {
+		content = append(content, styles.DefaultStyle.Render("No workflows found"))
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Left, content...)
+}
+
+func (m *Model) generateWorkflowSidebarContent(workflow *github.WorkflowRunWithJobs) string {
+	// TODO: Add workflow details
+	return workflow.GetName()
 }

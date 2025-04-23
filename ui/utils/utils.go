@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/cpaluszek/pipeye/ui/styles"
+	gh "github.com/google/go-github/v71/github"
 )
 
 func FormatTime(t time.Time) string {
@@ -27,6 +30,16 @@ func FormatTime(t time.Time) string {
 	}
 }
 
+func formatDuration(d time.Duration) string {
+	if d.Hours() >= 1 {
+		return fmt.Sprintf("%.1fh", d.Hours())
+	} else if d.Minutes() >= 1 {
+		return fmt.Sprintf("%.1fm", d.Minutes())
+	} else {
+		return fmt.Sprintf("%.1fs", d.Seconds())
+	}
+}
+
 func pluralize(n int) string {
 	if n == 1 {
 		return ""
@@ -41,4 +54,37 @@ func pluralize(n int) string {
 // by the automatic reset sequence (\x1b[0m) that lipgloss adds.
 func CleanANSIEscapes(s string) string {
 	return strings.ReplaceAll(s, "\x1b[0m", "")
+}
+
+func GetWorkflowRunDuration(wr *gh.WorkflowRun) string {
+	if wr == nil {
+		return ""
+	}
+	var duration string
+	if wr.GetUpdatedAt().After(wr.GetCreatedAt().Time) {
+		durationTime := wr.GetUpdatedAt().Sub(wr.GetCreatedAt().Time)
+		duration = formatDuration(durationTime)
+	} else {
+		duration = "running"
+	}
+	return duration
+}
+
+func GetWorkflowRunStatus(wr *gh.WorkflowRun) string {
+	if wr == nil {
+		return ""
+	}
+	status := wr.GetStatus()
+	conclusion := wr.GetConclusion()
+	statusSymbol := styles.GetStatusSymbol(status, conclusion)
+	content := ""
+	if conclusion != "" && status == "completed" {
+		content = statusSymbol + conclusion
+	} else if status == "in_progress" {
+		content = statusSymbol + "running"
+	} else {
+		content = statusSymbol + status
+	}
+
+	return CleanANSIEscapes(content)
 }
