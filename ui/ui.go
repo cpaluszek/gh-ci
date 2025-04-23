@@ -5,9 +5,12 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/cpaluszek/pipeye/ui/commands"
 	"github.com/cpaluszek/pipeye/ui/components/footer"
 	"github.com/cpaluszek/pipeye/ui/components/reposection"
+	"github.com/cpaluszek/pipeye/ui/components/sidebar"
+	"github.com/cpaluszek/pipeye/ui/constants"
 	"github.com/cpaluszek/pipeye/ui/context"
 	"github.com/cpaluszek/pipeye/ui/section"
 	"github.com/cpaluszek/pipeye/ui/workflowssection"
@@ -18,6 +21,7 @@ type Model struct {
 	ctx      *context.Context
 	repos    section.Section
 	worflows section.Section
+	sidebar sidebar.Model
 }
 
 func NewModel() Model {
@@ -32,6 +36,8 @@ func NewModel() Model {
 	m.repos = &s
 	w := workflowssection.NewModel(m.ctx)
 	m.worflows = &w
+	sidebar := sidebar.NewModel(m.ctx)
+	m.sidebar = sidebar
 
 	return m
 }
@@ -87,6 +93,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	sectionCmd := m.updateCurrentSection(msg)
+	m.sidebar.UpdateProgramContext(m.ctx)
 
 	var footerCmd tea.Cmd
 	m.footer, footerCmd = m.footer.Update(msg)
@@ -104,8 +111,13 @@ func (m Model) View() string {
 	s := strings.Builder{}
 
 	s.WriteString("\n")
-	currentSection := m.GetCurrentSection()
-	s.WriteString(currentSection.View())
+	content := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		m.GetCurrentSection().View(),
+		m.sidebar.View(),
+		)
+
+	s.WriteString(content)
 	s.WriteString("\n")
 
 	s.WriteString(m.footer.View())
@@ -117,7 +129,7 @@ func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
 	headerHeight := 1
 	m.ctx.ScreenWidth = msg.Width
 	m.ctx.ScreenHeight = msg.Height
-	m.ctx.MainContentWidth = msg.Width
+	m.ctx.MainContentWidth = msg.Width - constants.SideBarWidth
 	m.ctx.MainContentHeight = msg.Height - footerHeight - headerHeight
 	m.footer.SetWidth(msg.Width)
 }

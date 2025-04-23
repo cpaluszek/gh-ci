@@ -6,3 +6,4 @@ type Dimensions struct {
 }
 
 var TableHeaderHeight = 2
+var SideBarWidth = 30

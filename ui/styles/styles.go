@@ -19,7 +19,7 @@ var (
 	SuccessColor = SuccessText
 	WarningColor = WarningText
 	ErrorColor = ErrorText
-	InProgressColor = lipgloss.AdaptiveColor{Light: "077", Dark: "077"}
+	InProgressColor = lipgloss.AdaptiveColor{Light: "004", Dark: "004"}
 	SkippedColor = FaintText
 )
 
@@ -52,6 +52,15 @@ var (
 	SelectedRowStyle = RowStyle.Background(SelectedBackground)
 
 	SectionContainerStyle = lipgloss.NewStyle().Padding(0, 1)
+	
+	SideBarStyle  = lipgloss.NewStyle().
+		Padding(0, 1).
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(PrimaryBorder).
+		BorderBottom(false).
+		BorderTop(false).
+		BorderLeft(true).
+		BorderRight(false)
 
 	SuccessStyle    = lipgloss.NewStyle().Foreground(SuccessColor)
 	FailureStyle    = lipgloss.NewStyle().Foreground(ErrorColor)
