@@ -3,24 +3,24 @@ package styles
 import "github.com/charmbracelet/lipgloss"
 
 var (
-	PrimaryBorder = lipgloss.AdaptiveColor{Light: "013", Dark: "008"}
+	PrimaryBorder   = lipgloss.AdaptiveColor{Light: "013", Dark: "008"}
 	SecondaryBorder = lipgloss.AdaptiveColor{Light: "008", Dark: "007"}
 
 	SelectedBackground = lipgloss.AdaptiveColor{Light: "006", Dark: "008"}
 
-	PrimaryText = lipgloss.AdaptiveColor{Light: "000", Dark: "015"}
+	PrimaryText   = lipgloss.AdaptiveColor{Light: "000", Dark: "015"}
 	SecondaryText = lipgloss.AdaptiveColor{Light: "244", Dark: "251"}
-	FaintText = lipgloss.AdaptiveColor{Light: "007", Dark: "254"}
+	FaintText     = lipgloss.AdaptiveColor{Light: "007", Dark: "254"}
 
 	SuccessText = lipgloss.AdaptiveColor{Light: "002", Dark: "002"}
 	WarningText = lipgloss.AdaptiveColor{Light: "003", Dark: "003"}
-	ErrorText = lipgloss.AdaptiveColor{Light: "001", Dark: "001"}
+	ErrorText   = lipgloss.AdaptiveColor{Light: "001", Dark: "001"}
 
-	SuccessColor = SuccessText
-	WarningColor = WarningText
-	ErrorColor = ErrorText
-	InProgressColor = lipgloss.AdaptiveColor{Light: "077", Dark: "077"}
-	SkippedColor = FaintText
+	SuccessColor    = SuccessText
+	WarningColor    = WarningText
+	ErrorColor      = ErrorText
+	InProgressColor = lipgloss.AdaptiveColor{Light: "004", Dark: "004"}
+	SkippedColor    = FaintText
 )
 
 // Common styles
@@ -28,30 +28,43 @@ var (
 	SpinnerStyle = lipgloss.NewStyle().Bold(true).Padding(0, 1)
 
 	HeaderStyle = lipgloss.NewStyle().
-		Bold(true).
-		Border(lipgloss.NormalBorder()).
-		BorderForeground(PrimaryBorder).
-		BorderBottom(true).
-		BorderTop(false).
-		BorderLeft(false).
-		BorderRight(false)
+			Bold(true).
+			Border(lipgloss.NormalBorder()).
+			BorderForeground(PrimaryBorder).
+			BorderBottom(true).
+			BorderTop(false).
+			BorderLeft(false).
+			BorderRight(false)
+
+	TitleStyle = lipgloss.NewStyle().
+			Foreground(PrimaryText).
+			Bold(true)
 
 	ErrorTextStyle = lipgloss.NewStyle().
-		Foreground(ErrorText).
-		Bold(true)
+			Foreground(ErrorText).
+			Bold(true)
 
 	StatusBarStyle = lipgloss.NewStyle().
-		Background(SelectedBackground).
-		Padding(0, 1)
-
-	TableHeaderStyle = RowStyle.
-		Bold(true)
+			Background(SelectedBackground).
+			Padding(0, 1)
 
 	RowStyle = lipgloss.NewStyle()
+
+	TableHeaderStyle = RowStyle.
+				Bold(true)
 
 	SelectedRowStyle = RowStyle.Background(SelectedBackground)
 
 	SectionContainerStyle = lipgloss.NewStyle().Padding(0, 1)
+
+	SideBarStyle = lipgloss.NewStyle().
+			Padding(0, 1).
+			Border(lipgloss.NormalBorder()).
+			BorderForeground(PrimaryBorder).
+			BorderBottom(false).
+			BorderTop(false).
+			BorderLeft(true).
+			BorderRight(false)
 
 	SuccessStyle    = lipgloss.NewStyle().Foreground(SuccessColor)
 	FailureStyle    = lipgloss.NewStyle().Foreground(ErrorColor)
@@ -76,9 +89,13 @@ const (
 	// Job status dot variants
 	JobSuccessDot    = "󰄯 "
 	JobFailureDot    = "󰅙 "
-	JobCanceledDot   = "󰅚 "
-	JobSkippedDot    = "○ "
-	JobInProgressDot = "◌ "
+	JobCanceledDot   = " "
+	JobSkippedDot    = " "
+	JobInProgressDot = "󱥸 "
+
+	PullRequestSymbol = " "
+	PushSymbol        = " "
+	ScheduleSymbol    = "󰃰 "
 )
 
 func GetStatusSymbol(status, conclusion string) string {

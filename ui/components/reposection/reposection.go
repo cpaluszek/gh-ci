@@ -59,6 +59,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		m.repos = msg.Repositories
 		m.SetIsLoading(false)
 		m.Table.SetRows(m.BuildRows())
+		cmds = append(cmds, commands.SectionChanged)
 	}
 
 	table, cmd := m.Table.Update(msg)
