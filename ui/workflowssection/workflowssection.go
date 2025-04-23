@@ -28,6 +28,11 @@ func NewModel(ctx *context.Context) Model {
 				Grow:  false,
 			},
 			{
+				Title: "",
+				Width: 3,
+				Grow:  false,
+			},
+			{
 				Title: "Branch",
 				Width: 30,
 				Grow:  false,
@@ -102,6 +107,7 @@ func (m Model) BuildRows() []table.Row {
 		// Table row
 		rows = append(rows, table.Row{
 			displayStatus,
+			utils.GetRunEventIcon(*run.Event),
 			run.GetHeadBranch(),
 			utils.FormatTime(run.GetCreatedAt().Time),
 			duration,

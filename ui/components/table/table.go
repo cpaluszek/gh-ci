@@ -38,7 +38,6 @@ func NewModel(
 	rows []Row,
 	isLoading bool,
 ) Model {
-
 	loadingSpinner := spinner.New()
 	loadingSpinner.Spinner = spinner.MiniDot
 	loadingSpinner.Style = styles.SpinnerStyle

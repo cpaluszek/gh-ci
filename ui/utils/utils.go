@@ -106,11 +106,11 @@ func GetJobDuration(job *gh.WorkflowJob) string {
 func GetRunEventIcon(event string) string {
 	switch event {
 	case "pull_request":
-		return styles.PullRequestSymbol
+		return styles.PullRequestStyle.Render(styles.PullRequestSymbol)
 	case "push":
-		return styles.PushSymbol
+		return styles.PushStyle.Render(styles.PushSymbol)
 	case "schedule":
-		return styles.ScheduleSymbol
+		return styles.ScheduleStyle.Render(styles.ScheduleSymbol)
 	default:
 		return ""
 	}

@@ -21,6 +21,10 @@ var (
 	ErrorColor      = ErrorText
 	InProgressColor = lipgloss.AdaptiveColor{Light: "004", Dark: "004"}
 	SkippedColor    = FaintText
+
+	PullRequestColor = lipgloss.AdaptiveColor{Light: "004", Dark: "004"}
+	PushColor        = lipgloss.AdaptiveColor{Light: "003", Dark: "003"}
+	ScheduleColor    = lipgloss.AdaptiveColor{Light: "007", Dark: "007"}
 )
 
 // Common styles
@@ -72,6 +76,10 @@ var (
 	InProgressStyle = lipgloss.NewStyle().Foreground(InProgressColor)
 	SkippedStyle    = lipgloss.NewStyle().Foreground(SkippedColor)
 	DefaultStyle    = lipgloss.NewStyle().Foreground(PrimaryText)
+
+	PullRequestStyle = lipgloss.NewStyle().Foreground(PullRequestColor).Bold(true)
+	PushStyle        = lipgloss.NewStyle().Foreground(PushColor).Bold(true)
+	ScheduleStyle    = lipgloss.NewStyle().Foreground(ScheduleColor).Bold(true)
 )
 
 // TODO: add plain text fallback
