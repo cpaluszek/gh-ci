@@ -1,6 +1,9 @@
 package sidebar
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -72,28 +75,42 @@ func (m *Model) GenerateRepoSidebarContent(repo *github.RepositoryData) {
 		"",
 	}
 
-	if len(repo.WorkflowRunWithJobs) > 0 && len(repo.WorkflowRunWithJobs[0].Runs) > 0 {
-		for i := range repo.WorkflowRunWithJobs {
-			workflow := repo.WorkflowRunWithJobs[i]
-			content = append(content, styles.TitleStyle.Render(*workflow.Workflow.Name))
-
-			latestRun := workflow.Runs[0].Run
-
-			content = append(content,
-				styles.DefaultStyle.Render("Status: "+utils.GetWorkflowRunStatus(latestRun)),
-				styles.DefaultStyle.Render("Duration: "+utils.GetWorkflowRunDuration(latestRun)),
-				styles.DefaultStyle.Render("Event: "+utils.GetRunEventIcon(*latestRun.Event)+latestRun.GetEvent()),
-				styles.DefaultStyle.Render("Commit: "+latestRun.GetHeadCommit().GetMessage()),
-				styles.DefaultStyle.Render("Created at: "+utils.FormatTime(latestRun.GetCreatedAt().Time)),
-				"",
-			)
-		}
-	} else {
+	// If no workflows, show message and return
+	if len(repo.WorkflowRunWithJobs) == 0 || len(repo.WorkflowRunWithJobs[0].Runs) == 0 {
 		content = append(content, styles.DefaultStyle.Render("No workflows found"))
+		m.SetContent(lipgloss.JoinVertical(lipgloss.Left, content...))
+		return
 	}
 
-	if len(repo.WorkflowRunWithJobs) == 0 {
-		content = append(content, styles.DefaultStyle.Render("No workflows found"))
+	workflowDisplayHeight := 5
+	for i, workflow := range repo.WorkflowRunWithJobs {
+		if len(content) >= m.viewport.Height-workflowDisplayHeight {
+			content = append(content, styles.DefaultStyle.Render(fmt.Sprintf("\n+ %d more workflows...", len(repo.WorkflowRunWithJobs)-i)))
+			break
+		}
+
+		if len(workflow.Runs) == 0 {
+			continue
+		}
+
+		latestRun := workflow.Runs[0].Run
+
+		workflowName := utils.TruncateString(*workflow.Workflow.Name, constants.SideBarWidth-4)
+
+		createdTime := styles.DefaultStyle.Render(utils.FormatTime(latestRun.GetCreatedAt().Time))
+		statusDuration := utils.GetWorkflowRunStatus(latestRun) + " · " + createdTime
+
+		commitMsg := strings.Split(latestRun.GetHeadCommit().GetMessage(), "\n")[0]
+
+		eventIcon := utils.GetRunEventIcon(*latestRun.Event)
+
+		content = append(content, styles.TitleStyle.Render(workflowName))
+		content = append(content, styles.DefaultStyle.Render(statusDuration))
+		content = append(content, styles.DefaultStyle.Render(eventIcon+latestRun.GetEvent()+" · "+commitMsg))
+
+		if i < len(repo.WorkflowRunWithJobs)-1 {
+			content = append(content, styles.DefaultStyle.Render(""))
+		}
 	}
 
 	m.SetContent(lipgloss.JoinVertical(lipgloss.Left, content...))
