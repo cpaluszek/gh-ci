@@ -34,13 +34,13 @@ func NewClient(token string) (*Client, error) {
 }
 
 // FetchRepositoriesWithWorkflows fetches repositories that have GitHub Actions workflows
-func (c *Client) FetchRepositoriesWithWorkflows() ([]*RepositoryData, error) {
+func (c *Client) FetchRepositoriesWithWorkflows(names []string) ([]*RepositoryData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
 
 	// TODO: proper error management
 
-	repos, err := c.fetchRepositories(ctx)
+	repos, err := c.fetchRepositories(ctx, names)
 	if err != nil {
 		return nil, err
 	}
@@ -213,11 +213,12 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 }
 
 // Helper function to fetch repositories
-func (c *Client) fetchRepositories(ctx context.Context) ([]*gh.Repository, error) {
+func (c *Client) fetchRepositories(ctx context.Context, names []string) ([]*gh.Repository, error) {
 	opt := &gh.RepositoryListByAuthenticatedUserOptions{
 		ListOptions: gh.ListOptions{PerPage: repositoriesPerPage},
 	}
 
+	// Fetch current user repositories
 	var allRepos []*gh.Repository
 	for {
 		repos, resp, err := c.Client.Repositories.ListByAuthenticatedUser(ctx, opt)
@@ -230,6 +231,23 @@ func (c *Client) fetchRepositories(ctx context.Context) ([]*gh.Repository, error
 		}
 		opt.Page = resp.NextPage
 	}
+
+	// Fetch repositories from config
+	for _, repoName := range names {
+		repoParts := strings.Split(repoName, "/")
+		if len(repoParts) != 2 {
+			log.Printf("Invalid repository format: %s (expected 'owner/repo')", repoName)
+			continue
+		}
+		repo, _, err := c.Client.Repositories.Get(ctx, repoParts[0], repoParts[1])
+		if err != nil {
+			log.Printf("Error fetching %s: %s", repoName, err)
+			continue
+		}
+
+		allRepos = append(allRepos, repo)
+	}
+
 	return allRepos, nil
 }
 

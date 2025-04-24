@@ -12,6 +12,7 @@ type Config struct {
 
 type GithubConfig struct {
 	Token string
+	Repositories []string
 }
 
 func Load() (*Config, error) {
