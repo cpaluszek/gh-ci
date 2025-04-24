@@ -63,9 +63,9 @@ func SectionChanged() tea.Msg {
 	return SectionChangedMsg{}
 }
 
-func FetchRepositories(client *github.Client) tea.Cmd {
+func FetchRepositories(client *github.Client, names []string) tea.Cmd {
 	return func() tea.Msg {
-		repos, err := client.FetchRepositoriesWithWorkflows()
+		repos, err := client.FetchRepositoriesWithWorkflows(names)
 		if err != nil {
 			return ErrorMsg{Error: err}
 		}

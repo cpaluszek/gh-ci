@@ -244,7 +244,7 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 	headerColId := 0
 	for i := range m.Columns {
 		colWidth := lipgloss.Width(headerColumns[headerColId])
-		colHeight := 1
+		colHeight := 2
 
 		col := m.Rows[rowId][i]
 		renderedCol := style.

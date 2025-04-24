@@ -47,6 +47,13 @@ func pluralize(n int) string {
 	return "s"
 }
 
+func TruncateString(s string, maxLength int) string {
+	if len(s) <= maxLength {
+		return s
+	}
+	return s[:maxLength-3] + "..."
+}
+
 // CleanANSIEscapes removes ANSI reset sequences that cause rendering issues
 // with lipgloss styled content when combined with other styles.
 // This works around https://github.com/charmbracelet/lipgloss/issues/144
