@@ -1,6 +1,8 @@
 package workflowssection
 
 import (
+	"sort"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cpaluszek/pipeye/github"
 	"github.com/cpaluszek/pipeye/ui/commands"
@@ -10,11 +12,18 @@ import (
 	"github.com/cpaluszek/pipeye/ui/section"
 	"github.com/cpaluszek/pipeye/ui/styles"
 	"github.com/cpaluszek/pipeye/ui/utils"
+	gh "github.com/google/go-github/v71/github"
 )
+
+type WorkflowRunInfo struct {
+	Workflow *gh.Workflow
+	Run      *github.WorkflowRunWithJobs
+}
 
 type Model struct {
 	section.BaseModel
 	workflows *github.RepositoryData
+	allRuns   []WorkflowRunInfo
 }
 
 func NewModel(ctx *context.Context) Model {
@@ -23,28 +32,33 @@ func NewModel(ctx *context.Context) Model {
 		"Workflows",
 		[]table.Column{
 			{
-				Title: "Status",
-				Width: 14,
-				Grow:  false,
-			},
-			{
 				Title: "",
-				Width: 3,
+				Width: 4,
 				Grow:  false,
 			},
 			{
-				Title: "Branch",
-				Width: 30,
-				Grow:  false,
-			},
-			{
-				Title: "Triggered",
+				Title: "Workflow",
 				Width: 20,
 				Grow:  false,
 			},
 			{
+				Title: "Status",
+				Width: 18,
+				Grow:  false,
+			},
+			{
+				Title: "Branch",
+				Width: 32,
+				Grow:  false,
+			},
+			{
+				Title: "Triggered",
+				Width: 14,
+				Grow:  false,
+			},
+			{
 				Title: "Duration",
-				Width: 10,
+				Width: 12,
 				Grow:  false,
 			},
 			{
@@ -71,6 +85,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	switch msg := msg.(type) {
 	case commands.WorkflowsMsg:
 		m.workflows = msg.Workflows
+		m.allRuns = m.buildRunsList()
 		m.Table.SetRows(m.BuildRows())
 		m.Table.FirstItem()
 		cmds = append(cmds, commands.SectionChanged)
@@ -85,29 +100,50 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
+func (m *Model) buildRunsList() []WorkflowRunInfo {
+	var runs []WorkflowRunInfo
+	for _, workflow := range m.workflows.WorkflowRunWithJobs {
+		if len(workflow.Runs) == 0 {
+			continue
+		}
+		for _, runWithJob := range workflow.Runs {
+			runs = append(runs, WorkflowRunInfo{
+				Workflow: workflow.Workflow,
+				Run:      runWithJob,
+			})
+		}
+	}
+
+	// Sort by creation time (most recent first)
+	sort.Slice(runs, func(i, j int) bool {
+		return runs[i].Run.Run.GetCreatedAt().Time.After(runs[j].Run.Run.GetCreatedAt().Time)
+	})
+
+	return runs
+}
+
 func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
-	selectedWorkflow := m.workflows.WorkflowRunWithJobs[0]
-	for _, runWithJob := range selectedWorkflow.Runs {
-		run := runWithJob.Run
+	for _, runInfo := range m.allRuns {
+		run := runInfo.Run.Run
+		workflow := runInfo.Workflow
 
 		duration := utils.GetWorkflowRunDuration(run)
-
 		commitMsg := run.GetHeadCommit().GetMessage()
-
 		displayStatus := utils.GetWorkflowRunStatus(run)
 
 		// Build jobs indicators with symbols
 		jobs := ""
-		for _, job := range runWithJob.Jobs {
+		for _, job := range runInfo.Run.Jobs {
 			jobs += styles.GetJobStatusSymbol(job.GetConclusion())
 		}
 		jobs = utils.CleanANSIEscapes(jobs)
 
 		// Table row
 		rows = append(rows, table.Row{
+			" " + utils.GetRunEventIcon(*run.Event),
+			workflow.GetName(),
 			displayStatus,
-			utils.GetRunEventIcon(*run.Event),
 			run.GetHeadBranch(),
 			utils.FormatTime(run.GetCreatedAt().Time),
 			duration,
@@ -126,7 +162,7 @@ func (m *Model) GetDimensions() constants.Dimensions {
 }
 
 func (m *Model) NumRows() int {
-	if m.workflows == nil || len(m.workflows.WorkflowRunWithJobs) == 0 {
+	if m.workflows == nil || len(m.allRuns) == 0 {
 		return 0
 	}
 	return len(m.workflows.WorkflowRunWithJobs[0].Runs)
@@ -153,19 +189,14 @@ func (m *Model) Fetch() []tea.Cmd {
 }
 
 func (m *Model) GetCurrentRow() github.RowData {
-	if m.workflows == nil || len(m.workflows.WorkflowRunWithJobs) == 0 {
-		return nil
-	}
-
-	selectedWorkflow := m.workflows.WorkflowRunWithJobs[0]
-	if len(selectedWorkflow.Runs) == 0 {
+	if m.workflows == nil || len(m.allRuns) == 0 {
 		return nil
 	}
 
 	currentIndex := m.Table.GetCurrItem()
-	if currentIndex < 0 || currentIndex >= len(selectedWorkflow.Runs) {
+	if currentIndex < 0 || currentIndex >= len(m.allRuns) {
 		return nil
 	}
 
-	return selectedWorkflow.Runs[currentIndex]
+	return m.allRuns[currentIndex].Run
 }
