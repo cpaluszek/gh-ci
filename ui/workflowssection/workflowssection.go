@@ -116,7 +116,7 @@ func (m *Model) buildRunsList() []WorkflowRunInfo {
 
 	// Sort by creation time (most recent first)
 	sort.Slice(runs, func(i, j int) bool {
-		return runs[i].Run.Run.GetCreatedAt().Time.After(runs[j].Run.Run.GetCreatedAt().Time)
+		return runs[i].Run.Run.GetCreatedAt().After(runs[j].Run.Run.GetCreatedAt().Time)
 	})
 
 	return runs
