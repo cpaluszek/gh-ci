@@ -1,6 +1,8 @@
 package workflowssection
 
 import (
+	"os/exec"
+	"runtime"
 	"sort"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -89,6 +91,26 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		m.Table.SetRows(m.BuildRows())
 		m.Table.FirstItem()
 		cmds = append(cmds, commands.SectionChanged)
+
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "o":
+			if m.workflows == nil || len(m.allRuns) == 0 {
+				return m, nil
+			}
+			currentIndex := m.Table.GetCurrItem()
+			if currentIndex < 0 || currentIndex >= len(m.allRuns) {
+				return m, nil
+			}
+			// Get URL from current workflow run
+			url := m.allRuns[currentIndex].Run.Run.GetHTMLURL()
+			if url == "" {
+				return m, nil
+			}
+
+			// Return a command that will open the URL
+			return m, openBrowser(url)
+		}
 	}
 
 	table, cmd := m.Table.Update(msg)
@@ -98,6 +120,24 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+func openBrowser(url string) tea.Cmd {
+	var cmd *exec.Cmd
+
+	switch runtime.GOOS {
+	case "darwin": // macOS
+		cmd = exec.Command("open", url)
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "start", url)
+	default: // Linux and others
+		cmd = exec.Command("xdg-open", url)
+	}
+	cmd = exec.Command("explorer.exe", url)
+
+	return tea.ExecProcess(cmd, func(err error) tea.Msg {
+		return nil
+	})
 }
 
 func (m *Model) buildRunsList() []WorkflowRunInfo {
