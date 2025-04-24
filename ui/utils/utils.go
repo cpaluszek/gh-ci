@@ -18,13 +18,13 @@ func FormatTime(t time.Time) string {
 		return "just now"
 	case diff < time.Hour:
 		minutes := int(diff.Minutes())
-		return fmt.Sprintf("%d minute%s ago", minutes, pluralize(minutes))
+		return fmt.Sprintf("%dm ago", minutes)
 	case diff < 24*time.Hour:
 		hours := int(diff.Hours())
-		return fmt.Sprintf("%d hour%s ago", hours, pluralize(hours))
+		return fmt.Sprintf("%dh ago", hours)
 	case diff < 30*24*time.Hour:
 		days := int(diff.Hours() / 24)
-		return fmt.Sprintf("%d day%s ago", days, pluralize(days))
+		return fmt.Sprintf("%dd ago", days)
 	default:
 		return t.Format("Jan 2, 2006")
 	}
@@ -38,13 +38,6 @@ func formatDuration(d time.Duration) string {
 	} else {
 		return fmt.Sprintf("%.1fs", d.Seconds())
 	}
-}
-
-func pluralize(n int) string {
-	if n == 1 {
-		return ""
-	}
-	return "s"
 }
 
 func TruncateString(s string, maxLength int) string {
