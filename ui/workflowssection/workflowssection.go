@@ -24,7 +24,7 @@ func NewModel(ctx *context.Context) Model {
 		[]table.Column{
 			{
 				Title: "Status",
-				Width: 20,
+				Width: 14,
 				Grow:  false,
 			},
 			{
@@ -39,12 +39,12 @@ func NewModel(ctx *context.Context) Model {
 			},
 			{
 				Title: "Triggered",
-				Width: 30,
+				Width: 20,
 				Grow:  false,
 			},
 			{
 				Title: "Duration",
-				Width: 20,
+				Width: 10,
 				Grow:  false,
 			},
 			{

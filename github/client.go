@@ -39,7 +39,6 @@ func (c *Client) FetchRepositoriesWithWorkflows(names []string) ([]*RepositoryDa
 	defer cancel()
 
 	// TODO: proper error management
-
 	repos, err := c.fetchRepositories(ctx, names)
 	if err != nil {
 		return nil, err
@@ -232,6 +231,7 @@ func (c *Client) fetchRepositories(ctx context.Context, names []string) ([]*gh.R
 		opt.Page = resp.NextPage
 	}
 
+	// TODO: potential duplicates
 	// Fetch repositories from config
 	for _, repoName := range names {
 		repoParts := strings.Split(repoName, "/")

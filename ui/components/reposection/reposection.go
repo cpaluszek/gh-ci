@@ -30,17 +30,22 @@ func NewModel(ctx *context.Context) Model {
 			{
 				Title: "Language",
 				Width: 20,
-				Grow:  true,
+				Grow:  false,
 			},
 			{
 				Title: "Stars",
 				Width: 10,
-				Grow:  true,
+				Grow:  false,
+			},
+			{
+				Title: "Visibility",
+				Width: 20,
+				Grow:  false,
 			},
 			{
 				Title: "Last Updated",
 				Width: 20,
-				Grow:  true,
+				Grow:  false,
 			},
 		},
 	)
@@ -91,6 +96,7 @@ func (m Model) BuildRows() []table.Row {
 			*repo.FullName,
 			language,
 			stars,
+			repo.GetVisibility(),
 			updated,
 		})
 	}
@@ -127,7 +133,7 @@ func (m *Model) Fetch() []tea.Cmd {
 
 	var cmds []tea.Cmd
 	tableCmd := m.Table.StartLoadingSpinner()
-	fetchCmd := commands.FetchRepositories(m.Ctx.Client)
+	fetchCmd := commands.FetchRepositories(m.Ctx.Client, m.Ctx.Config.Github.Repositories)
 	cmds = append(cmds, tableCmd, fetchCmd)
 	m.SetIsLoading(true)
 	return cmds
