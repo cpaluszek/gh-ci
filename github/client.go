@@ -16,12 +16,11 @@ type Client struct {
 }
 
 const (
-	defaultConcurrency  = 10
-	defaultTimeout      = 10 * time.Second
-	repositoriesPerPage = 20
-	workflowsPerPage    = 20
-	workflowsRunCount   = 30
-	jobsPerPage         = 10
+	defaultConcurrency = 10
+	defaultTimeout     = 10 * time.Second
+	workflowsPerPage   = 20
+	workflowsRunCount  = 30
+	jobsPerPage        = 10
 )
 
 // TODO: if fetching is used on interval, should use cache for repo workflows
@@ -62,32 +61,17 @@ func (c *Client) FetchRepositoriesWithWorkflows(names []string) ([]*RepositoryDa
 			semaphore <- struct{}{}
 			defer func() { <-semaphore }()
 
-			workflows, _, err := c.Client.Actions.ListWorkflows(
-				ctx,
-				currentRepo.GetOwner().GetLogin(),
-				currentRepo.GetName(),
-				&gh.ListOptions{PerPage: 1},
-			)
+			owner, repo := ParseFullName(currentRepo.GetFullName())
+			workflowsWithRuns, error := c.FetchWorkflowsWithRuns(owner, repo)
 
-			if err != nil {
-				log.Printf("Error fetching workflows for %s: %v",
-					currentRepo.GetFullName(), err)
+			if error != nil {
+				log.Printf("Error fetching workflows with runs for %s: %v",
+					currentRepo.GetFullName(), error)
 				return
 			}
-
-			if workflows != nil && workflows.GetTotalCount() > 0 {
-				owner, repo := ParseFullName(currentRepo.GetFullName())
-				workflowsWithRuns, error := c.FetchWorkflowsWithRuns(owner, repo)
-
-				if error != nil {
-					log.Printf("Error fetching workflows with runs for %s: %v",
-						currentRepo.GetFullName(), error)
-					return
-				}
-				mutex.Lock()
-				result = append(result, &RepositoryData{currentRepo, workflowsWithRuns, nil})
-				mutex.Unlock()
-			}
+			mutex.Lock()
+			result = append(result, &RepositoryData{currentRepo, workflowsWithRuns, nil})
+			mutex.Unlock()
 		}()
 	}
 
@@ -105,9 +89,6 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	start := time.Now()
-	log.Printf("Fetching workflows and runs for %s/%s...\n", owner, repo)
-
 	// Fetch workflows
 	workflows, _, err := c.Client.Actions.ListWorkflows(ctx, owner, repo, &gh.ListOptions{
 		PerPage: workflowsPerPage,
@@ -115,8 +96,6 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 	if err != nil {
 		return nil, err
 	}
-
-	log.Printf("Found %d workflows", len(workflows.Workflows))
 
 	var result []*WorkflowWithRuns
 	var wgWorkflows sync.WaitGroup
@@ -207,35 +186,18 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 	}
 
 	wgWorkflows.Wait()
-	log.Printf("Fetched %d workflows with runs in %s", len(result), time.Since(start))
 	return result, nil
 }
 
 // Helper function to fetch repositories
 func (c *Client) fetchRepositories(ctx context.Context, names []string) ([]*gh.Repository, error) {
-	opt := &gh.RepositoryListByAuthenticatedUserOptions{
-		ListOptions: gh.ListOptions{PerPage: repositoriesPerPage},
-	}
+	var repos []*gh.Repository
 
-	// Fetch current user repositories
-	var allRepos []*gh.Repository
-	for {
-		repos, resp, err := c.Client.Repositories.ListByAuthenticatedUser(ctx, opt)
-		if err != nil {
-			return nil, err
-		}
-		allRepos = append(allRepos, repos...)
-		if resp.NextPage == 0 {
-			break
-		}
-		opt.Page = resp.NextPage
-	}
-
-	// TODO: potential duplicates
 	// Fetch repositories from config
 	for _, repoName := range names {
 		repoParts := strings.Split(repoName, "/")
 		if len(repoParts) != 2 {
+			// TODO: format should be checked in config
 			log.Printf("Invalid repository format: %s (expected 'owner/repo')", repoName)
 			continue
 		}
@@ -245,10 +207,10 @@ func (c *Client) fetchRepositories(ctx context.Context, names []string) ([]*gh.R
 			continue
 		}
 
-		allRepos = append(allRepos, repo)
+		repos = append(repos, repo)
 	}
 
-	return allRepos, nil
+	return repos, nil
 }
 
 // ParseFullName splits a full repository name into owner and repo parts
