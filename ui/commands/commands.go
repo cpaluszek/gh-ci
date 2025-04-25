@@ -2,6 +2,9 @@ package commands
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"runtime"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cpaluszek/pipeye/config"
@@ -31,7 +34,6 @@ type ErrorMsg struct {
 }
 
 // Commands
-// A command with no arguments
 func InitConfig() tea.Msg {
 	cfg, err := config.Load()
 	if err != nil {
@@ -44,7 +46,6 @@ func InitConfig() tea.Msg {
 	}
 }
 
-// A command with arguments
 func InitClient(token string) tea.Cmd {
 	return func() tea.Msg {
 		client, err := github.NewClient(token)
@@ -87,4 +88,35 @@ func GoToWorkflow(row github.RowData) tea.Cmd {
 			Workflows: workflows,
 		}
 	}
+}
+
+func OpenBrowser(url string) tea.Cmd {
+	var cmd *exec.Cmd
+
+	isWSL := false
+	if runtime.GOOS == "linux" {
+		_, hasWSLDistro := os.LookupEnv("WSL_DISTRO_NAME")
+		_, hasWSLInterop := os.LookupEnv("WSL_INTEROP")
+		isWSL = hasWSLDistro || hasWSLInterop
+	}
+
+	switch {
+	case isWSL:
+		cmd = exec.Command("explorer.exe", url)
+	case runtime.GOOS == "darwin": // macOS
+		cmd = exec.Command("open", url)
+	case runtime.GOOS == "windows":
+		cmd = exec.Command("cmd", "/c", "start", url)
+	default:
+		cmd = exec.Command("xdg-open", url)
+	}
+
+	return tea.ExecProcess(cmd, func(err error) tea.Msg {
+		if err != nil {
+			return ErrorMsg{
+				Error: fmt.Errorf("failed to open browser: %w", err),
+			}
+		}
+		return nil
+	})
 }

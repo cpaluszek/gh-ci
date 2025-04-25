@@ -65,6 +65,24 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		m.SetIsLoading(false)
 		m.Table.SetRows(m.BuildRows())
 		cmds = append(cmds, commands.SectionChanged)
+
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "o":
+			if m.repos == nil {
+				return m, nil
+			}
+			currentIndex := m.Table.GetCurrItem()
+			if currentIndex < 0 || currentIndex >= len(m.repos) {
+				return m, nil
+			}
+			url := m.repos[currentIndex].Repository.GetHTMLURL()
+			if url == "" {
+				return m, nil
+			}
+
+			return m, commands.OpenBrowser(url)
+		}
 	}
 
 	table, cmd := m.Table.Update(msg)
