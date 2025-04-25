@@ -89,6 +89,24 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		m.Table.SetRows(m.BuildRows())
 		m.Table.FirstItem()
 		cmds = append(cmds, commands.SectionChanged)
+
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "o":
+			if m.workflows == nil || len(m.allRuns) == 0 {
+				return m, nil
+			}
+			currentIndex := m.Table.GetCurrItem()
+			if currentIndex < 0 || currentIndex >= len(m.allRuns) {
+				return m, nil
+			}
+			url := m.allRuns[currentIndex].Run.Run.GetHTMLURL()
+			if url == "" {
+				return m, nil
+			}
+
+			return m, commands.OpenBrowser(url)
+		}
 	}
 
 	table, cmd := m.Table.Update(msg)
@@ -116,7 +134,7 @@ func (m *Model) buildRunsList() []WorkflowRunInfo {
 
 	// Sort by creation time (most recent first)
 	sort.Slice(runs, func(i, j int) bool {
-		return runs[i].Run.Run.GetCreatedAt().Time.After(runs[j].Run.Run.GetCreatedAt().Time)
+		return runs[i].Run.Run.GetCreatedAt().After(runs[j].Run.Run.GetCreatedAt().Time)
 	})
 
 	return runs

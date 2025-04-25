@@ -14,7 +14,7 @@ type Model struct {
 
 func NewModel() Model {
 	return Model{
-		content:              " ↑/↓: navigate · enter: select · q: quit",
+		content:              " ↑/↓: navigate · enter: select · o: open · q: quit",
 		ShowQuitConfirmation: false,
 		quitConfirmation:     "Press q/esc again to quit",
 	}
