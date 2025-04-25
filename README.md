@@ -75,21 +75,6 @@ Pipeye is built with:
 - [Lipgloss](https://github.com/charmbracelet/lipgloss): Style definitions for terminal applications
 - [go-github](https://github.com/google/go-github): GitHub API client for Go
 
-### Project Structure
-
-```
-pipeye/
-├── cmd/pipeye/           # Application entry point
-├── internal/
-│   ├── app/              # Main application model
-│   ├── config/           # Configuration handling
-│   ├── github/           # GitHub API interactions
-│   ├── models/           # Data models and messages
-│   └── ui/               # User interface components
-│       ├── render/       # UI rendering functions
-│       └── views/        # View components
-```
-
 ## Credits
 
 This project was inspired by [gh-dash](https://github.com/dlvhdr/gh-dash) by [dlvhdr](https://github.com/dlvhdr) - a beautiful CLI dashboard for GitHub.
