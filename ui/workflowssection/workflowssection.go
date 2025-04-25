@@ -180,10 +180,7 @@ func (m *Model) GetDimensions() constants.Dimensions {
 }
 
 func (m *Model) NumRows() int {
-	if m.workflows == nil || len(m.allRuns) == 0 {
-		return 0
-	}
-	return len(m.workflows.WorkflowRunWithJobs[0].Runs)
+	return len(m.allRuns)
 }
 
 func (m *Model) SetIsLoading(val bool) {

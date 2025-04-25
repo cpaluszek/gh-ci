@@ -53,6 +53,7 @@ func NewModel(
 				Height: dimensions.Height - constants.TableHeaderHeight,
 			},
 			len(rows),
+			constants.TableRowHeight,
 		),
 		isLoading:      isLoading,
 		loadingSpinner: loadingSpinner,
@@ -134,7 +135,7 @@ func (m *Model) GetCurrItem() int {
 
 func (m *Model) SetRows(rows []Row) {
 	m.Rows = rows
-	m.rowsViewport.NumRows = len(rows)
+	m.rowsViewport.SetNumRows(len(rows))
 	m.SyncViewPortContent()
 }
 
@@ -244,14 +245,13 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 	headerColId := 0
 	for i := range m.Columns {
 		colWidth := lipgloss.Width(headerColumns[headerColId])
-		colHeight := 2
 
 		col := m.Rows[rowId][i]
 		renderedCol := style.
 			Width(colWidth).
 			MaxWidth(colWidth).
-			Height(colHeight).
-			MaxHeight(colHeight).
+			Height(constants.TableRowHeight).
+			MaxHeight(constants.TableRowHeight).
 			Render(col)
 
 		renderedColumns = append(renderedColumns, renderedCol)

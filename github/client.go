@@ -19,7 +19,7 @@ const (
 	defaultConcurrency = 10
 	defaultTimeout     = 10 * time.Second
 	workflowsPerPage   = 20
-	workflowsRunCount  = 30
+	workflowsRunCount  = 20
 	jobsPerPage        = 10
 )
 
