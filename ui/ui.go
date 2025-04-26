@@ -181,19 +181,11 @@ func (m *Model) GetCurrentSection() section.Section {
 }
 
 func (m *Model) OnSelectedRowChanged() {
-	switch m.ctx.View {
-	case context.RepoView:
-		m.repos.GetCurrentRow()
-	case context.WorkflowView:
-		m.worflows.GetCurrentRow()
-	case context.RunView:
-		m.run.GetCurrentRow()
-	}
-
 	// Sidebar sync
 	currentRow := m.GetCurrentSection().GetCurrentRow()
 	if currentRow == nil {
 		m.sidebar.SetContent("")
+		return
 	}
 
 	switch m.ctx.View {
@@ -206,7 +198,6 @@ func (m *Model) OnSelectedRowChanged() {
 			m.sidebar.GenerateWorkflowSidebarContent(workflowRun)
 		}
 	case context.RunView:
-
 		if jobData, ok := currentRow.(*github.Job); ok {
 			m.sidebar.GenerateRunSidebarContent(jobData)
 		}
