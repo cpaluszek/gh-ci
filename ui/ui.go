@@ -13,6 +13,7 @@ import (
 	"github.com/cpaluszek/pipeye/ui/components/sidebar"
 	"github.com/cpaluszek/pipeye/ui/constants"
 	"github.com/cpaluszek/pipeye/ui/context"
+	"github.com/cpaluszek/pipeye/ui/runsection"
 	"github.com/cpaluszek/pipeye/ui/section"
 	"github.com/cpaluszek/pipeye/ui/workflowssection"
 )
@@ -22,6 +23,7 @@ type Model struct {
 	ctx      *context.Context
 	repos    section.Section
 	worflows section.Section
+	run      section.Section
 	sidebar  sidebar.Model
 }
 
@@ -37,6 +39,8 @@ func NewModel() Model {
 	m.repos = &s
 	w := workflowssection.NewModel(m.ctx)
 	m.worflows = &w
+	r := runsection.NewModel(m.ctx)
+	m.run = &r
 	sidebar := sidebar.NewModel(m.ctx)
 	m.sidebar = sidebar
 
@@ -68,13 +72,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case context.RepoView:
 				repo := m.repos.GetCurrentRow()
 				m.ctx.View = context.WorkflowView
-
 				return m, commands.GoToWorkflow(repo)
+
+			case context.WorkflowView:
+				workflowRun := m.worflows.GetCurrentRow()
+				m.ctx.View = context.RunView
+				return m, commands.GoToRun(workflowRun)
 			}
 		case "esc", "backspace":
 			switch m.ctx.View {
 			case context.WorkflowView:
 				m.ctx.View = context.RepoView
+				m.OnSelectedRowChanged()
+			case context.RunView:
+				m.ctx.View = context.WorkflowView
 				m.OnSelectedRowChanged()
 			}
 
@@ -149,6 +160,9 @@ func (m *Model) updateCurrentSection(msg tea.Msg) (cmd tea.Cmd) {
 	case context.WorkflowView:
 		m.worflows.UpdateContext(m.ctx)
 		m.worflows, cmd = m.worflows.Update(msg)
+	case context.RunView:
+		m.run.UpdateContext(m.ctx)
+		m.run, cmd = m.run.Update(msg)
 	}
 
 	return cmd
@@ -160,6 +174,8 @@ func (m *Model) GetCurrentSection() section.Section {
 		return m.repos
 	case context.WorkflowView:
 		return m.worflows
+	case context.RunView:
+		return m.run
 	}
 	return m.repos
 }
@@ -170,6 +186,8 @@ func (m *Model) OnSelectedRowChanged() {
 		m.repos.GetCurrentRow()
 	case context.WorkflowView:
 		m.worflows.GetCurrentRow()
+	case context.RunView:
+		m.run.GetCurrentRow()
 	}
 
 	// Sidebar sync
@@ -186,6 +204,11 @@ func (m *Model) OnSelectedRowChanged() {
 	case context.WorkflowView:
 		if workflowRun, ok := currentRow.(*github.WorkflowRunWithJobs); ok {
 			m.sidebar.GenerateWorkflowSidebarContent(workflowRun)
+		}
+	case context.RunView:
+
+		if jobData, ok := currentRow.(*github.JobData); ok {
+			m.sidebar.GenerateRunSidebarContent(jobData)
 		}
 	}
 }

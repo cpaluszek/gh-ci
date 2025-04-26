@@ -10,6 +10,7 @@ type ViewType string
 const (
 	RepoView     ViewType = "repo"
 	WorkflowView ViewType = "workflow"
+	RunView      ViewType = "run"
 )
 
 type Context struct {
