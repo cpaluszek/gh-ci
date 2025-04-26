@@ -23,6 +23,10 @@ type WorkflowRunWithJobs struct {
 	Jobs []*gh.WorkflowJob
 }
 
+type JobData struct {
+	Job *gh.WorkflowJob
+}
+
 type RowData interface {
 	GetID() string
 	GetName() string
@@ -60,4 +64,23 @@ func (w WorkflowRunWithJobs) GetURL() string {
 		return ""
 	}
 	return w.Run.GetHTMLURL()
+}
+
+func (j JobData) GetID() string {
+	if j.Job == nil {
+		return ""
+	}
+	return j.Job.GetNodeID()
+}
+func (j JobData) GetName() string {
+	if j.Job == nil {
+		return ""
+	}
+	return j.Job.GetName()
+}
+func (j JobData) GetURL() string {
+	if j.Job == nil {
+		return ""
+	}
+	return j.Job.GetHTMLURL()
 }

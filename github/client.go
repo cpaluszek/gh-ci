@@ -23,8 +23,6 @@ const (
 	jobsPerPage        = 10
 )
 
-// TODO: if fetching is used on interval, should use cache for repo workflows
-
 func NewClient(token string) (*Client, error) {
 	client := gh.NewClient(nil).WithAuthToken(token)
 	return &Client{

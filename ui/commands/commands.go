@@ -27,6 +27,10 @@ type WorkflowsMsg struct {
 	Workflows *github.RepositoryData
 }
 
+type WorkflowRunMsg struct {
+	RunWithJobs *github.WorkflowRunWithJobs
+}
+
 type SectionChangedMsg struct{}
 
 type ErrorMsg struct {
@@ -86,6 +90,20 @@ func GoToWorkflow(row github.RowData) tea.Cmd {
 		}
 		return WorkflowsMsg{
 			Workflows: workflows,
+		}
+	}
+}
+
+func GoToRun(row github.RowData) tea.Cmd {
+	return func() tea.Msg {
+		runWithJobs, ok := row.(*github.WorkflowRunWithJobs)
+		if !ok {
+			return ErrorMsg{
+				Error: fmt.Errorf("selected row is not a workflow"),
+			}
+		}
+		return WorkflowRunMsg{
+			RunWithJobs: runWithJobs,
 		}
 	}
 }

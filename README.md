@@ -64,8 +64,14 @@ pipeye
 
 - **Workflow View:**
   - `↑`/`k`, `↓`/`j`: Navigate through workflow runs
+  - `Enter`: Select run and view jobs 
   - `o`: Open selected workflow run in browser
   - `Esc`/`Backspace`: Return to repository list
+
+- **Workflow View:**
+  - `↑`/`k`, `↓`/`j`: Navigate through workflow runs
+  - `o`: Open selected workflow run in browser
+  - `Esc`/`Backspace`: Return to workflow list
 
 ## Development
 

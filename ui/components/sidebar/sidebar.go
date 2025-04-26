@@ -71,7 +71,7 @@ func (m *Model) UpdateProgramContext(ctx *context.Context) {
 
 func (m *Model) GenerateRepoSidebarContent(repo *github.RepositoryData) {
 	content := []string{
-		styles.TitleStyle.Render("Repository: " + *repo.Repository.FullName),
+		styles.TitleStyle.Render("Repository: " + repo.GetName()),
 		"",
 	}
 
@@ -118,7 +118,7 @@ func (m *Model) GenerateRepoSidebarContent(repo *github.RepositoryData) {
 
 func (m *Model) GenerateWorkflowSidebarContent(workflow *github.WorkflowRunWithJobs) {
 	content := []string{
-		styles.TitleStyle.Render("Workflow: " + *workflow.Run.Name),
+		styles.TitleStyle.Render("Workflow: " + workflow.GetName()),
 		"",
 	}
 
@@ -133,6 +133,25 @@ func (m *Model) GenerateWorkflowSidebarContent(workflow *github.WorkflowRunWithJ
 		}
 	} else {
 		content = append(content, styles.DefaultStyle.Render("No jobs found"))
+	}
+
+	m.SetContent(lipgloss.JoinVertical(lipgloss.Left, content...))
+}
+
+func (m *Model) GenerateRunSidebarContent(run *github.JobData) {
+	content := []string{
+		styles.TitleStyle.Render("Run: " + run.GetName()),
+		"",
+	}
+
+	// TODO: add failed step logs
+	for _, step := range run.Job.Steps {
+		if step.GetName() == "" {
+			continue
+		}
+		content = append(content, styles.TitleStyle.Render(*step.Name))
+		content = append(content, styles.DefaultStyle.Render("Status: "+styles.GetJobStatusSymbol(step.GetConclusion())))
+		content = append(content, "")
 	}
 
 	m.SetContent(lipgloss.JoinVertical(lipgloss.Left, content...))
