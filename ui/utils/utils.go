@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cpaluszek/pipeye/ui/styles"
 	gh "github.com/google/go-github/v71/github"
 )
 
@@ -76,7 +75,7 @@ func GetWorkflowRunStatus(wr *gh.WorkflowRun) string {
 	}
 	status := wr.GetStatus()
 	conclusion := wr.GetConclusion()
-	statusSymbol := styles.GetStatusSymbol(status, conclusion)
+	statusSymbol := GetStatusSymbol(status, conclusion)
 	content := ""
 	if conclusion != "" && status == "completed" {
 		content = statusSymbol + conclusion
@@ -101,18 +100,4 @@ func GetJobDuration(job *gh.WorkflowJob) string {
 		duration = "running"
 	}
 	return duration
-}
-
-func GetRunEventIcon(event string) string {
-	// TODO: Add missing events: "workflow_dispatch", "repository_dispatch", "release", "deployment", "deployment_status", "create", "delete", "fork", "watch"
-	switch event {
-	case "pull_request":
-		return styles.PullRequestStyle.Render(styles.PullRequestSymbol)
-	case "push":
-		return styles.PushStyle.Render(styles.PushSymbol)
-	case "schedule":
-		return styles.ScheduleStyle.Render(styles.ScheduleSymbol)
-	default:
-		return ""
-	}
 }

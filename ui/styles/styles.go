@@ -25,6 +25,12 @@ var (
 	PullRequestColor = lipgloss.AdaptiveColor{Light: "004", Dark: "004"}
 	PushColor        = lipgloss.AdaptiveColor{Light: "003", Dark: "003"}
 	ScheduleColor    = lipgloss.AdaptiveColor{Light: "007", Dark: "007"}
+	PlayColor        = lipgloss.AdaptiveColor{Light: "005", Dark: "005"}
+	IssueColor       = lipgloss.AdaptiveColor{Light: "001", Dark: "001"}
+	DeploymentColor  = lipgloss.AdaptiveColor{Light: "002", Dark: "002"}
+	TagColor         = lipgloss.AdaptiveColor{Light: "006", Dark: "006"}
+	WebHookColor     = lipgloss.AdaptiveColor{Light: "003", Dark: "003"}
+	ForkColor        = lipgloss.AdaptiveColor{Light: "008", Dark: "008"}
 )
 
 // Common styles
@@ -80,71 +86,10 @@ var (
 	PullRequestStyle = lipgloss.NewStyle().Foreground(PullRequestColor).Bold(true)
 	PushStyle        = lipgloss.NewStyle().Foreground(PushColor).Bold(true)
 	ScheduleStyle    = lipgloss.NewStyle().Foreground(ScheduleColor).Bold(true)
+	PlayStyle        = lipgloss.NewStyle().Foreground(PlayColor).Bold(true)
+	IssueStyle       = lipgloss.NewStyle().Foreground(IssueColor).Bold(true)
+	DeploymentStyle  = lipgloss.NewStyle().Foreground(DeploymentColor).Bold(true)
+	TagStyle         = lipgloss.NewStyle().Foreground(TagColor).Bold(true)
+	WebHookStyle     = lipgloss.NewStyle().Foreground(WebHookColor).Bold(true)
+	ForkStyle        = lipgloss.NewStyle().Foreground(ForkColor).Bold(true)
 )
-
-// TODO: add plain text fallback
-// Nerd Font workflow status symbols
-const (
-	// Status symbols
-	SuccessSymbol    = "󰄬 "
-	FailureSymbol    = "󰅚 "
-	CanceledSymbol   = "󰔛 "
-	SkippedSymbol    = "󰒭 "
-	NeutralSymbol    = "󰘿 "
-	InProgressSymbol = "󰑮 "
-	QueuedSymbol     = "󰥔 "
-
-	// Job status dot variants
-	JobSuccessDot    = "󰄯 "
-	JobFailureDot    = "󰅙 "
-	JobCanceledDot   = " "
-	JobSkippedDot    = " "
-	JobInProgressDot = "󱥸 "
-
-	PullRequestSymbol = " "
-	PushSymbol        = " "
-	ScheduleSymbol    = "󰃰 "
-)
-
-func GetStatusSymbol(status, conclusion string) string {
-	switch status {
-	case "completed":
-		switch conclusion {
-		case "success":
-			return SuccessStyle.Render(SuccessSymbol)
-		case "failure", "timed_out", "startup_failure":
-			return FailureStyle.Render(FailureSymbol)
-		case "cancelled":
-			return CanceledStyle.Render(CanceledSymbol)
-		case "skipped":
-			return SkippedStyle.Render(SkippedSymbol)
-		case "neutral":
-			return DefaultStyle.Render(NeutralSymbol)
-		default:
-			return DefaultStyle.Render(NeutralSymbol)
-		}
-	case "in_progress":
-		return InProgressStyle.Render(InProgressSymbol)
-	case "queued":
-		return InProgressStyle.Render(QueuedSymbol)
-	default:
-		return DefaultStyle.Render(NeutralSymbol)
-	}
-}
-
-func GetJobStatusSymbol(conclusion string) string {
-	switch conclusion {
-	case "success":
-		return SuccessStyle.Render(JobSuccessDot)
-	case "failure", "timed_out", "startup_failure":
-		return FailureStyle.Render(JobFailureDot)
-	case "cancelled":
-		return CanceledStyle.Render(JobCanceledDot)
-	case "skipped":
-		return SkippedStyle.Render(JobSkippedDot)
-	case "in_progress":
-		return DefaultStyle.Render(JobInProgressDot)
-	default:
-		return DefaultStyle.Render(JobSkippedDot)
-	}
-}

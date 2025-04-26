@@ -102,7 +102,7 @@ func (m *Model) GenerateRepoSidebarContent(repo *github.Repository) {
 
 		commitMsg := strings.Split(latestRun.GetHeadCommit().GetMessage(), "\n")[0]
 
-		eventIcon := utils.GetRunEventIcon(*latestRun.Event)
+		eventIcon := utils.GetRunEventSymbol(*latestRun.Event)
 
 		content = append(content, styles.TitleStyle.Render(workflowName))
 		content = append(content, styles.DefaultStyle.Render(statusDuration))
@@ -125,7 +125,9 @@ func (m *Model) GenerateWorkflowSidebarContent(workflow *github.WorkflowRun) {
 	if len(workflow.Jobs) > 0 {
 		for _, job := range workflow.Jobs {
 			content = append(content, styles.TitleStyle.Render(*job.Name))
-			content = append(content, styles.DefaultStyle.Render("Status: "+styles.GetJobStatusSymbol(job.GetConclusion())))
+			status := utils.GetJobStatusSymbol(job.GetStatus(), job.GetConclusion())
+			status = utils.CleanANSIEscapes(status) + job.GetConclusion()
+			content = append(content, styles.DefaultStyle.Render(status))
 			if job.GetConclusion() != "skipped" {
 				content = append(content, styles.DefaultStyle.Render("Duration: "+utils.GetJobDuration(job)))
 			}
@@ -144,13 +146,11 @@ func (m *Model) GenerateRunSidebarContent(run *github.Job) {
 		"",
 	}
 
-	// TODO: add failed step logs
 	for _, step := range run.Job.Steps {
 		if step.GetName() == "" {
 			continue
 		}
 		content = append(content, styles.TitleStyle.Render(*step.Name))
-		content = append(content, styles.DefaultStyle.Render("Status: "+styles.GetJobStatusSymbol(step.GetConclusion())))
 		content = append(content, "")
 	}
 

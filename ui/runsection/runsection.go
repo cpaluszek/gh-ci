@@ -88,7 +88,7 @@ func (m Model) BuildRows() []table.Row {
 
 	var rows []table.Row
 	for _, job := range m.RunWithJobs.Jobs {
-		status := styles.GetJobStatusSymbol(job.GetConclusion()) + " " + job.GetConclusion()
+		status := utils.GetJobStatusSymbol(job.GetStatus(), job.GetConclusion()) + " " + job.GetConclusion()
 		status = utils.CleanANSIEscapes(status)
 		rows = append(rows, table.Row{
 			job.GetName(),

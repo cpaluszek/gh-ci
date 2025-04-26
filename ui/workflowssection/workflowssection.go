@@ -10,7 +10,6 @@ import (
 	"github.com/cpaluszek/pipeye/ui/constants"
 	"github.com/cpaluszek/pipeye/ui/context"
 	"github.com/cpaluszek/pipeye/ui/section"
-	"github.com/cpaluszek/pipeye/ui/styles"
 	"github.com/cpaluszek/pipeye/ui/utils"
 	gh "github.com/google/go-github/v71/github"
 )
@@ -153,13 +152,13 @@ func (m Model) BuildRows() []table.Row {
 		// Build jobs indicators with symbols
 		jobs := ""
 		for _, job := range runInfo.Run.Jobs {
-			jobs += styles.GetJobStatusSymbol(job.GetConclusion())
+			jobs += utils.GetJobStatusSymbol(job.GetStatus(), job.GetConclusion())
 		}
 		jobs = utils.CleanANSIEscapes(jobs)
 
 		// Table row
 		rows = append(rows, table.Row{
-			" " + utils.GetRunEventIcon(*run.Event),
+			" " + utils.GetRunEventSymbol(*run.Event),
 			workflow.GetName(),
 			displayStatus,
 			run.GetHeadBranch(),
