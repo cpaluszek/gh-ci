@@ -6,24 +6,25 @@ import (
 	gh "github.com/google/go-github/v71/github"
 )
 
-type RepositoryData struct {
-	Repository          *gh.Repository
-	WorkflowRunWithJobs []*WorkflowWithRuns
-	Error               error
+// TODO: clarify types and variables naming
+type Repository struct {
+	Info      *gh.Repository
+	Workflows []*Workflow
+	Error     error
 }
 
-type WorkflowWithRuns struct {
-	Workflow *gh.Workflow
-	Runs     []*WorkflowRunWithJobs
-	Error    error
+type Workflow struct {
+	Info  *gh.Workflow
+	Runs  []*WorkflowRun
+	Error error
 }
 
-type WorkflowRunWithJobs struct {
-	Run  *gh.WorkflowRun
+type WorkflowRun struct {
+	Info *gh.WorkflowRun
 	Jobs []*gh.WorkflowJob
 }
 
-type JobData struct {
+type Job struct {
 	Job *gh.WorkflowJob
 }
 
@@ -33,52 +34,54 @@ type RowData interface {
 	GetURL() string
 }
 
-func (r RepositoryData) GetID() string {
-	return r.Repository.GetNodeID()
+func (r Repository) GetID() string {
+	return r.Info.GetNodeID()
 }
 
-func (r RepositoryData) GetName() string {
-	return r.Repository.GetFullName()
+func (r Repository) GetName() string {
+	return r.Info.GetFullName()
 }
 
-func (r RepositoryData) GetURL() string {
-	return r.Repository.GetHTMLURL()
+func (r Repository) GetURL() string {
+	return r.Info.GetHTMLURL()
 }
 
-func (w WorkflowRunWithJobs) GetID() string {
-	if w.Run == nil {
+func (w WorkflowRun) GetID() string {
+	if w.Info == nil {
 		return ""
 	}
-	return fmt.Sprintf("%d", w.Run.GetID())
+	return fmt.Sprintf("%d", w.Info.GetID())
 }
 
-func (w WorkflowRunWithJobs) GetName() string {
-	if w.Run == nil {
+func (w WorkflowRun) GetName() string {
+	if w.Info == nil {
 		return ""
 	}
-	return w.Run.GetDisplayTitle()
+	return w.Info.GetDisplayTitle()
 }
 
-func (w WorkflowRunWithJobs) GetURL() string {
-	if w.Run == nil {
+func (w WorkflowRun) GetURL() string {
+	if w.Info == nil {
 		return ""
 	}
-	return w.Run.GetHTMLURL()
+	return w.Info.GetHTMLURL()
 }
 
-func (j JobData) GetID() string {
+func (j Job) GetID() string {
 	if j.Job == nil {
 		return ""
 	}
 	return j.Job.GetNodeID()
 }
-func (j JobData) GetName() string {
+
+func (j Job) GetName() string {
 	if j.Job == nil {
 		return ""
 	}
 	return j.Job.GetName()
 }
-func (j JobData) GetURL() string {
+
+func (j Job) GetURL() string {
 	if j.Job == nil {
 		return ""
 	}

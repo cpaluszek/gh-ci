@@ -20,15 +20,15 @@ type ConfigInitMsg struct {
 }
 
 type RepositoriesMsg struct {
-	Repositories []*github.RepositoryData
+	Repositories []*github.Repository
 }
 
 type WorkflowsMsg struct {
-	Workflows *github.RepositoryData
+	Workflows *github.Repository
 }
 
 type WorkflowRunMsg struct {
-	RunWithJobs *github.WorkflowRunWithJobs
+	RunWithJobs *github.WorkflowRun
 }
 
 type SectionChangedMsg struct{}
@@ -82,7 +82,7 @@ func FetchRepositories(client *github.Client, names []string) tea.Cmd {
 
 func GoToWorkflow(row github.RowData) tea.Cmd {
 	return func() tea.Msg {
-		workflows, ok := row.(*github.RepositoryData)
+		workflows, ok := row.(*github.Repository)
 		if !ok {
 			return ErrorMsg{
 				Error: fmt.Errorf("selected row is not a repository"),
@@ -96,7 +96,7 @@ func GoToWorkflow(row github.RowData) tea.Cmd {
 
 func GoToRun(row github.RowData) tea.Cmd {
 	return func() tea.Msg {
-		runWithJobs, ok := row.(*github.WorkflowRunWithJobs)
+		runWithJobs, ok := row.(*github.WorkflowRun)
 		if !ok {
 			return ErrorMsg{
 				Error: fmt.Errorf("selected row is not a workflow"),

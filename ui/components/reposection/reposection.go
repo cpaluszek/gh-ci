@@ -14,7 +14,7 @@ import (
 
 type Model struct {
 	section.BaseModel
-	repos []*github.RepositoryData
+	repos []*github.Repository
 }
 
 func NewModel(ctx *context.Context) Model {
@@ -76,7 +76,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			if currentIndex < 0 || currentIndex >= len(m.repos) {
 				return m, nil
 			}
-			url := m.repos[currentIndex].Repository.GetHTMLURL()
+			url := m.repos[currentIndex].Info.GetHTMLURL()
 			if url == "" {
 				return m, nil
 			}
@@ -97,7 +97,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
 	for _, repoData := range m.repos {
-		repo := repoData.Repository
+		repo := repoData.Info
 		language := ""
 		if repo.Language != nil {
 			language = *repo.Language

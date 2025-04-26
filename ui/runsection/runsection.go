@@ -13,7 +13,7 @@ import (
 
 type Model struct {
 	section.BaseModel
-	RunWithJobs *github.WorkflowRunWithJobs
+	RunWithJobs *github.WorkflowRun
 }
 
 func NewModel(ctx *context.Context) Model {
@@ -124,7 +124,7 @@ func (m *Model) GetCurrentRow() github.RowData {
 	if currentIndex < 0 || currentIndex >= len(m.RunWithJobs.Jobs) {
 		return nil
 	}
-	return &github.JobData{
+	return &github.Job{
 		Job: m.RunWithJobs.Jobs[currentIndex],
 	}
 }

@@ -17,12 +17,12 @@ import (
 
 type WorkflowRunInfo struct {
 	Workflow *gh.Workflow
-	Run      *github.WorkflowRunWithJobs
+	Run      *github.WorkflowRun
 }
 
 type Model struct {
 	section.BaseModel
-	workflows *github.RepositoryData
+	workflows *github.Repository
 	allRuns   []WorkflowRunInfo
 }
 
@@ -100,7 +100,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			if currentIndex < 0 || currentIndex >= len(m.allRuns) {
 				return m, nil
 			}
-			url := m.allRuns[currentIndex].Run.Run.GetHTMLURL()
+			url := m.allRuns[currentIndex].Run.Info.GetHTMLURL()
 			if url == "" {
 				return m, nil
 			}
@@ -120,13 +120,13 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 func (m *Model) buildRunsList() []WorkflowRunInfo {
 	var runs []WorkflowRunInfo
-	for _, workflow := range m.workflows.WorkflowRunWithJobs {
+	for _, workflow := range m.workflows.Workflows {
 		if len(workflow.Runs) == 0 {
 			continue
 		}
 		for _, runWithJob := range workflow.Runs {
 			runs = append(runs, WorkflowRunInfo{
-				Workflow: workflow.Workflow,
+				Workflow: workflow.Info,
 				Run:      runWithJob,
 			})
 		}
@@ -134,7 +134,7 @@ func (m *Model) buildRunsList() []WorkflowRunInfo {
 
 	// Sort by creation time (most recent first)
 	sort.Slice(runs, func(i, j int) bool {
-		return runs[i].Run.Run.GetCreatedAt().After(runs[j].Run.Run.GetCreatedAt().Time)
+		return runs[i].Run.Info.GetCreatedAt().After(runs[j].Run.Info.GetCreatedAt().Time)
 	})
 
 	return runs
@@ -143,7 +143,7 @@ func (m *Model) buildRunsList() []WorkflowRunInfo {
 func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
 	for _, runInfo := range m.allRuns {
-		run := runInfo.Run.Run
+		run := runInfo.Run.Info
 		workflow := runInfo.Workflow
 
 		duration := utils.GetWorkflowRunDuration(run)

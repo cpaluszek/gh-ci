@@ -104,6 +104,7 @@ func GetJobDuration(job *gh.WorkflowJob) string {
 }
 
 func GetRunEventIcon(event string) string {
+	// TODO: Add missing events: "workflow_dispatch", "repository_dispatch", "release", "deployment", "deployment_status", "create", "delete", "fork", "watch"
 	switch event {
 	case "pull_request":
 		return styles.PullRequestStyle.Render(styles.PullRequestSymbol)

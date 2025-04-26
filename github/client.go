@@ -31,7 +31,7 @@ func NewClient(token string) (*Client, error) {
 }
 
 // FetchRepositoriesWithWorkflows fetches repositories that have GitHub Actions workflows
-func (c *Client) FetchRepositoriesWithWorkflows(names []string) ([]*RepositoryData, error) {
+func (c *Client) FetchRepositoriesWithWorkflows(names []string) ([]*Repository, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
 
@@ -44,7 +44,7 @@ func (c *Client) FetchRepositoriesWithWorkflows(names []string) ([]*RepositoryDa
 	start := time.Now()
 	log.Printf("Fetching workflows for %d repositories...\n", len(repos))
 
-	var result []*RepositoryData
+	var result []*Repository
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
 	semaphore := make(chan struct{}, defaultConcurrency)
@@ -68,7 +68,7 @@ func (c *Client) FetchRepositoriesWithWorkflows(names []string) ([]*RepositoryDa
 				return
 			}
 			mutex.Lock()
-			result = append(result, &RepositoryData{currentRepo, workflowsWithRuns, nil})
+			result = append(result, &Repository{currentRepo, workflowsWithRuns, nil})
 			mutex.Unlock()
 		}()
 	}
@@ -76,13 +76,13 @@ func (c *Client) FetchRepositoriesWithWorkflows(names []string) ([]*RepositoryDa
 	wg.Wait()
 	log.Printf("Found %d repositories with workflows in %s", len(result), time.Since(start))
 	sort.Slice(result, func(i, j int) bool {
-		return result[i].Repository.UpdatedAt.After(result[j].Repository.UpdatedAt.Time)
+		return result[i].Info.UpdatedAt.After(result[j].Info.UpdatedAt.Time)
 	})
 	return result, nil
 }
 
 // FetchWorkflowsWithRuns fetches workflows and their recent runs for a repository
-func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns, error) {
+func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*Workflow, error) {
 	// NOTE: use a new context?
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -95,7 +95,7 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 		return nil, err
 	}
 
-	var result []*WorkflowWithRuns
+	var result []*Workflow
 	var wgWorkflows sync.WaitGroup
 	var mutexWorkflows sync.Mutex
 	semaphoreWorkflows := make(chan struct{}, defaultConcurrency)
@@ -112,8 +112,8 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 			semaphoreWorkflows <- struct{}{}
 			defer func() { <-semaphoreWorkflows }()
 
-			workflowWithRuns := &WorkflowWithRuns{
-				Workflow: currentWorkflow,
+			workflowWithRuns := &Workflow{
+				Info: currentWorkflow,
 			}
 
 			// Fetch runs for this workflow
@@ -137,7 +137,7 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 
 			// Fetch jobs for each run
 			if runs != nil && len(runs.WorkflowRuns) > 0 {
-				runsWithJobs := make([]*WorkflowRunWithJobs, len(runs.WorkflowRuns))
+				runsWithJobs := make([]*WorkflowRun, len(runs.WorkflowRuns))
 				var wgJobs sync.WaitGroup
 				var mutexJobs sync.Mutex
 
@@ -149,8 +149,8 @@ func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*WorkflowWithRuns
 					go func() {
 						defer wgJobs.Done()
 
-						runWithJobs := &WorkflowRunWithJobs{
-							Run: currentRun,
+						runWithJobs := &WorkflowRun{
+							Info: currentRun,
 						}
 
 						jobs, _, err := c.Client.Actions.ListWorkflowJobs(

@@ -198,16 +198,16 @@ func (m *Model) OnSelectedRowChanged() {
 
 	switch m.ctx.View {
 	case context.RepoView:
-		if repo, ok := currentRow.(*github.RepositoryData); ok {
+		if repo, ok := currentRow.(*github.Repository); ok {
 			m.sidebar.GenerateRepoSidebarContent(repo)
 		}
 	case context.WorkflowView:
-		if workflowRun, ok := currentRow.(*github.WorkflowRunWithJobs); ok {
+		if workflowRun, ok := currentRow.(*github.WorkflowRun); ok {
 			m.sidebar.GenerateWorkflowSidebarContent(workflowRun)
 		}
 	case context.RunView:
 
-		if jobData, ok := currentRow.(*github.JobData); ok {
+		if jobData, ok := currentRow.(*github.Job); ok {
 			m.sidebar.GenerateRunSidebarContent(jobData)
 		}
 	}

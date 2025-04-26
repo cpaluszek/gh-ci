@@ -69,23 +69,23 @@ func (m *Model) UpdateProgramContext(ctx *context.Context) {
 	m.viewport.Width = constants.SideBarWidth
 }
 
-func (m *Model) GenerateRepoSidebarContent(repo *github.RepositoryData) {
+func (m *Model) GenerateRepoSidebarContent(repo *github.Repository) {
 	content := []string{
 		styles.TitleStyle.Render("Repository: " + repo.GetName()),
 		"",
 	}
 
 	// If no workflows, show message and return
-	if len(repo.WorkflowRunWithJobs) == 0 || len(repo.WorkflowRunWithJobs[0].Runs) == 0 {
+	if len(repo.Workflows) == 0 || len(repo.Workflows[0].Runs) == 0 {
 		content = append(content, styles.DefaultStyle.Render("No workflows found"))
 		m.SetContent(lipgloss.JoinVertical(lipgloss.Left, content...))
 		return
 	}
 
 	workflowDisplayHeight := 5
-	for i, workflow := range repo.WorkflowRunWithJobs {
+	for i, workflow := range repo.Workflows {
 		if len(content) >= m.viewport.Height-workflowDisplayHeight {
-			content = append(content, styles.DefaultStyle.Render(fmt.Sprintf("\n+ %d more workflows...", len(repo.WorkflowRunWithJobs)-i)))
+			content = append(content, styles.DefaultStyle.Render(fmt.Sprintf("\n+ %d more workflows...", len(repo.Workflows)-i)))
 			break
 		}
 
@@ -93,9 +93,9 @@ func (m *Model) GenerateRepoSidebarContent(repo *github.RepositoryData) {
 			continue
 		}
 
-		latestRun := workflow.Runs[0].Run
+		latestRun := workflow.Runs[0].Info
 
-		workflowName := utils.TruncateString(*workflow.Workflow.Name, constants.SideBarWidth-4)
+		workflowName := utils.TruncateString(*workflow.Info.Name, constants.SideBarWidth-4)
 
 		createdTime := styles.DefaultStyle.Render(utils.FormatTime(latestRun.GetCreatedAt().Time))
 		statusDuration := utils.GetWorkflowRunStatus(latestRun) + " · " + createdTime
@@ -108,7 +108,7 @@ func (m *Model) GenerateRepoSidebarContent(repo *github.RepositoryData) {
 		content = append(content, styles.DefaultStyle.Render(statusDuration))
 		content = append(content, styles.DefaultStyle.Render(eventIcon+latestRun.GetEvent()+" · "+commitMsg))
 
-		if i < len(repo.WorkflowRunWithJobs)-1 {
+		if i < len(repo.Workflows)-1 {
 			content = append(content, styles.DefaultStyle.Render(""))
 		}
 	}
@@ -116,7 +116,7 @@ func (m *Model) GenerateRepoSidebarContent(repo *github.RepositoryData) {
 	m.SetContent(lipgloss.JoinVertical(lipgloss.Left, content...))
 }
 
-func (m *Model) GenerateWorkflowSidebarContent(workflow *github.WorkflowRunWithJobs) {
+func (m *Model) GenerateWorkflowSidebarContent(workflow *github.WorkflowRun) {
 	content := []string{
 		styles.TitleStyle.Render("Workflow: " + workflow.GetName()),
 		"",
@@ -138,7 +138,7 @@ func (m *Model) GenerateWorkflowSidebarContent(workflow *github.WorkflowRunWithJ
 	m.SetContent(lipgloss.JoinVertical(lipgloss.Left, content...))
 }
 
-func (m *Model) GenerateRunSidebarContent(run *github.JobData) {
+func (m *Model) GenerateRunSidebarContent(run *github.Job) {
 	content := []string{
 		styles.TitleStyle.Render("Run: " + run.GetName()),
 		"",
