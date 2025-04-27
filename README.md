@@ -29,12 +29,15 @@ gh extension install gh-ci
 ```
 
 ## Configuration
+gh-ci automatically creates a default configuration file at first run. You can find or manually edit the config at:
 
+- `$XDG_CONFIG_HOME/gh-ci/config.yaml` (typically `~/.config/gh-ci/config.yaml`)
 
+### Configuration Options
 ```yaml
 github:
   repositories:
-    - owner/repo1
+    - owner/repo1   # Format: username/repository or organization/repository
     - owner/repo2
 ```
 
