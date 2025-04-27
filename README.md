@@ -25,7 +25,7 @@ Without a Nerd Font, the status icons will appear as placeholder characters or m
 2. Install this extension:
 
 ```bash
-gh extension install gh-ci
+gh extension install cpaluszek/gh-ci
 ```
 
 ## Configuration
