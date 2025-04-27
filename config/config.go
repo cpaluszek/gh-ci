@@ -91,8 +91,17 @@ func createDefaultConfig(configDir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create config file: %w", err)
 	}
-	defer newConfigFile.Close()
-	newConfigFile.WriteString(string(yaml))
+	defer func() {
+		closeErr := newConfigFile.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
+
+	_, err = newConfigFile.WriteString(string(yaml))
+	if err != nil {
+		return fmt.Errorf("failed to write to config file: %w", err)
+	}
 
 	fmt.Printf("Created default configuration at: %s\n", configPath)
 	fmt.Println("Please update it with your repository names.")
