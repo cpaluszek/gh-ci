@@ -1,4 +1,4 @@
-# Pipeye
+# gh-actions
 
 A terminal UI application for monitoring your GitHub Actions workflows and runs.
 
@@ -21,18 +21,11 @@ Without a Nerd Font, the status icons will appear as placeholder characters or m
 
 ## Installation
 
-### From Source
+1. Install the `gh` CLI - [instructions](https://github.com/cli/cli?tab=readme-ov-file#installation)
+2. Install this extension:
 
 ```bash
-# Clone the repository
-git clone https://github.com/cpaluszek/pipeye.git
-cd pipeye
-
-# Build the application
-go build -o pipeye .
-
-# Move to a directory in your PATH (optional)
-sudo mv pipeye /usr/local/bin/
+gh extension install gh-actions
 ```
 
 ## Configuration
@@ -48,8 +41,7 @@ github:
 ## Usage
 
 ```bash
-# Start pipeye
-pipeye
+gh actions
 ```
 
 ### Navigation
@@ -77,7 +69,7 @@ Pipeye is built with:
 
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea): Terminal UI framework
 - [Lipgloss](https://github.com/charmbracelet/lipgloss): Style definitions for terminal applications
-- [go-github](https://github.com/google/go-github): GitHub API client for Go
+- [go-gh](https://github.com/cli/go-gh): Go library for the GitHub CLI
 
 ## Credits
 

@@ -12,7 +12,6 @@ import (
 	"github.com/cli/go-gh/v2/pkg/api"
 )
 
-// TODO: update readme to include the new API client usage
 type Client struct {
 	Client *api.RESTClient
 }
