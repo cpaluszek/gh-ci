@@ -9,6 +9,12 @@ import (
 )
 
 func Execute() {
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
 	// Redirect logs to a file
 	f, err := tea.LogToFile("debug.log", "debug")
 	if err != nil {
@@ -20,11 +26,6 @@ func Execute() {
 			err = closeErr
 		}
 	}()
-
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatal("Failed to load config:", err)
-	}
 
 	model := ui.NewModel(cfg)
 
