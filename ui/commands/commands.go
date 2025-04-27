@@ -7,8 +7,8 @@ import (
 	"runtime"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/cpaluszek/pipeye/config"
-	"github.com/cpaluszek/pipeye/github"
+	"github.com/cpaluszek/gh-actions/config"
+	"github.com/cpaluszek/gh-actions/github"
 )
 
 type ClientInitMsg struct {
@@ -38,9 +38,9 @@ type ErrorMsg struct {
 }
 
 // Commands
-func InitClient(token string) tea.Cmd {
+func InitClient() tea.Cmd {
 	return func() tea.Msg {
-		client, err := github.NewClient(token)
+		client, err := github.NewClient()
 		if err != nil {
 			return ErrorMsg{
 				Error: err,

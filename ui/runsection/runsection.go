@@ -2,17 +2,17 @@ package runsection
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/cpaluszek/pipeye/github"
-	"github.com/cpaluszek/pipeye/ui/commands"
-	"github.com/cpaluszek/pipeye/ui/components/table"
-	"github.com/cpaluszek/pipeye/ui/context"
-	"github.com/cpaluszek/pipeye/ui/section"
-	"github.com/cpaluszek/pipeye/ui/utils"
+	"github.com/cpaluszek/gh-actions/github"
+	"github.com/cpaluszek/gh-actions/ui/commands"
+	"github.com/cpaluszek/gh-actions/ui/components/table"
+	"github.com/cpaluszek/gh-actions/ui/context"
+	"github.com/cpaluszek/gh-actions/ui/section"
+	"github.com/cpaluszek/gh-actions/ui/utils"
 )
 
 type Model struct {
 	section.BaseModel
-	RunWithJobs *github.WorkflowRun
+	Runs *github.WorkflowRun
 }
 
 func NewModel(ctx *context.Context) Model {
@@ -38,8 +38,8 @@ func NewModel(ctx *context.Context) Model {
 		})
 
 	return Model{
-		BaseModel:   base,
-		RunWithJobs: nil,
+		BaseModel: base,
+		Runs:      nil,
 	}
 }
 
@@ -48,7 +48,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case commands.WorkflowRunMsg:
-		m.RunWithJobs = msg.RunWithJobs
+		m.Runs = msg.RunWithJobs
 		m.Table.SetRows(m.BuildRows())
 		m.Table.FirstItem()
 		cmds = append(cmds, commands.SectionChanged)
@@ -56,14 +56,14 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "o":
-			if m.RunWithJobs == nil {
+			if m.Runs == nil {
 				return m, nil
 			}
 			currentIndex := m.Table.GetCurrItem()
-			if currentIndex < 0 || currentIndex >= len(m.RunWithJobs.Jobs) {
+			if currentIndex < 0 || currentIndex >= len(m.Runs.Jobs) {
 				return m, nil
 			}
-			url := m.RunWithJobs.Jobs[currentIndex].GetHTMLURL()
+			url := m.Runs.Jobs[currentIndex].URL
 			if url == "" {
 				return m, nil
 			}
@@ -81,13 +81,13 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 }
 
 func (m Model) BuildRows() []table.Row {
-	if m.RunWithJobs == nil {
+	if m.Runs == nil {
 		return nil
 	}
 
 	var rows []table.Row
-	for _, job := range m.RunWithJobs.Jobs {
-		status := utils.GetJobStatusSymbol(m.Ctx, job.GetStatus(), job.GetConclusion()) + " " + job.GetConclusion()
+	for _, job := range m.Runs.Jobs {
+		status := utils.GetJobStatusSymbol(m.Ctx, job.Status, job.Conclusion) + " " + job.Conclusion
 		status = utils.CleanANSIEscapes(status)
 		rows = append(rows, table.Row{
 			job.GetName(),
@@ -100,7 +100,7 @@ func (m Model) BuildRows() []table.Row {
 }
 
 func (m *Model) NumRows() int {
-	return len(m.RunWithJobs.Jobs)
+	return len(m.Runs.Jobs)
 }
 
 func (m *Model) SetIsLoading(val bool) {
@@ -116,14 +116,12 @@ func (m *Model) Fetch() []tea.Cmd {
 }
 
 func (m *Model) GetCurrentRow() github.RowData {
-	if m == nil || m.RunWithJobs == nil || len(m.RunWithJobs.Jobs) == 0 {
+	if m == nil || m.Runs == nil || len(m.Runs.Jobs) == 0 {
 		return nil
 	}
 	currentIndex := m.Table.GetCurrItem()
-	if currentIndex < 0 || currentIndex >= len(m.RunWithJobs.Jobs) {
+	if currentIndex < 0 || currentIndex >= len(m.Runs.Jobs) {
 		return nil
 	}
-	return &github.Job{
-		Job: m.RunWithJobs.Jobs[currentIndex],
-	}
+	return m.Runs.Jobs[currentIndex]
 }

@@ -49,8 +49,8 @@ jobs:
         os: [ubuntu-latest]
         include:
           - os: ubuntu-latest
-            artifact_name: pipeye
-            asset_name: pipeye-linux-amd64
+            artifact_name: gh-actions
+            asset_name: gh-actions-linux-amd64
 
     steps:
       - uses: actions/checkout@v3

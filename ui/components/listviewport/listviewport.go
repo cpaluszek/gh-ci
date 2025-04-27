@@ -3,8 +3,8 @@ package listviewport
 import (
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/cpaluszek/pipeye/ui/constants"
-	"github.com/cpaluszek/pipeye/ui/context"
+	"github.com/cpaluszek/gh-actions/ui/constants"
+	"github.com/cpaluszek/gh-actions/ui/context"
 )
 
 type Model struct {

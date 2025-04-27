@@ -2,15 +2,14 @@ package sidebar
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/cpaluszek/pipeye/github"
-	"github.com/cpaluszek/pipeye/ui/constants"
-	"github.com/cpaluszek/pipeye/ui/context"
-	"github.com/cpaluszek/pipeye/ui/utils"
+	"github.com/cpaluszek/gh-actions/github"
+	"github.com/cpaluszek/gh-actions/ui/constants"
+	"github.com/cpaluszek/gh-actions/ui/context"
+	"github.com/cpaluszek/gh-actions/ui/utils"
 )
 
 type Model struct {
@@ -92,20 +91,22 @@ func (m *Model) GenerateRepoSidebarContent(repo *github.Repository) {
 			continue
 		}
 
-		latestRun := workflow.Runs[0].Info
+		latestRun := workflow.Runs[0]
 
-		workflowName := utils.TruncateString(*workflow.Info.Name, constants.SideBarWidth-4)
+		workflowName := utils.TruncateString(workflow.Name, constants.SideBarWidth-4)
 
-		createdTime := m.ctx.Styles.Default.Render(utils.FormatTime(latestRun.GetCreatedAt().Time))
+		createdTime := m.ctx.Styles.Default.Render(utils.FormatTime(latestRun.CreatedAt))
 		statusDuration := utils.GetWorkflowRunStatus(m.ctx, latestRun) + " · " + createdTime
 
-		commitMsg := strings.Split(latestRun.GetHeadCommit().GetMessage(), "\n")[0]
+		// commitMsg := strings.Split(latestRun.GetHeadCommit().GetMessage(), "\n")[0]
+		// TODO: fix commmit
+		commitMsg := ""
 
-		eventIcon := utils.GetRunEventSymbol(m.ctx, *latestRun.Event)
+		eventIcon := utils.GetRunEventSymbol(m.ctx, latestRun.Event)
 
 		content = append(content, m.ctx.Styles.Title.Render(workflowName))
 		content = append(content, m.ctx.Styles.Default.Render(statusDuration))
-		content = append(content, m.ctx.Styles.Default.Render(eventIcon+latestRun.GetEvent()+" · "+commitMsg))
+		content = append(content, m.ctx.Styles.Default.Render(eventIcon+latestRun.Event+" · "+commitMsg))
 
 		if i < len(repo.Workflows)-1 {
 			content = append(content, m.ctx.Styles.Default.Render(""))
@@ -123,11 +124,11 @@ func (m *Model) GenerateWorkflowSidebarContent(workflow *github.WorkflowRun) {
 
 	if len(workflow.Jobs) > 0 {
 		for _, job := range workflow.Jobs {
-			content = append(content, m.ctx.Styles.Title.Render(*job.Name))
-			status := utils.GetJobStatusSymbol(m.ctx, job.GetStatus(), job.GetConclusion())
-			status = utils.CleanANSIEscapes(status) + job.GetConclusion()
+			content = append(content, m.ctx.Styles.Title.Render(job.Name))
+			status := utils.GetJobStatusSymbol(m.ctx, job.Status, job.Conclusion)
+			status = utils.CleanANSIEscapes(status) + job.Conclusion
 			content = append(content, m.ctx.Styles.Default.Render(status))
-			if job.GetConclusion() != "skipped" {
+			if job.Conclusion != "skipped" {
 				content = append(content, m.ctx.Styles.Default.Render("Duration: "+utils.GetJobDuration(job)))
 			}
 			content = append(content, "")
@@ -145,12 +146,12 @@ func (m *Model) GenerateRunSidebarContent(run *github.Job) {
 		"",
 	}
 
-	for _, step := range run.Job.Steps {
-		if step.GetName() == "" {
+	for _, step := range run.Steps {
+		if step.Name == "" {
 			continue
 		}
-		content = append(content, m.ctx.Styles.Title.Render(*step.Name))
-		status := utils.GetJobStatusSymbol(m.ctx, step.GetStatus(), step.GetConclusion()) + "· " + step.GetConclusion()
+		content = append(content, m.ctx.Styles.Title.Render(step.Name))
+		status := utils.GetJobStatusSymbol(m.ctx, step.Status, step.Conclusion) + "· " + step.Conclusion
 		content = append(content, m.ctx.Styles.Default.Render("Status: "+status))
 		content = append(content, "")
 	}

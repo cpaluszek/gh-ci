@@ -1,6 +1,6 @@
 package main
 
-import "github.com/cpaluszek/pipeye/cmd"
+import "github.com/cpaluszek/gh-actions/cmd"
 
 func main() {
 	cmd.Execute()

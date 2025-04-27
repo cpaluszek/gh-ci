@@ -1,4 +1,4 @@
-# Pipeye
+# gh-actions
 
 A terminal UI application for monitoring your GitHub Actions workflows and runs.
 
@@ -12,7 +12,7 @@ A terminal UI application for monitoring your GitHub Actions workflows and runs.
 ## Requirements
 
 ### Fonts
-Pipeye uses Nerd Font icons for workflow and job status indicators. For the best experience:
+gh-actions uses Nerd Font icons for workflow and job status indicators. For the best experience:
 
 1. Install a [Nerd Font](https://www.nerdfonts.com/font-downloads) compatible font of your choice
 2. Configure your terminal to use the installed Nerd Font
@@ -21,27 +21,18 @@ Without a Nerd Font, the status icons will appear as placeholder characters or m
 
 ## Installation
 
-### From Source
+1. Install the `gh` CLI - [instructions](https://github.com/cli/cli?tab=readme-ov-file#installation)
+2. Install this extension:
 
 ```bash
-# Clone the repository
-git clone https://github.com/cpaluszek/pipeye.git
-cd pipeye
-
-# Build the application
-go build -o pipeye .
-
-# Move to a directory in your PATH (optional)
-sudo mv pipeye /usr/local/bin/
+gh extension install gh-actions
 ```
 
 ## Configuration
 
-Pipeye requires a GitHub personal access token to access your repositories and workflows. Create a config.yaml file in the same directory where you run the application:
 
 ```yaml
 github:
-  token: your-github-token
   repositories:
     - owner/repo1
     - owner/repo2
@@ -50,8 +41,7 @@ github:
 ## Usage
 
 ```bash
-# Start pipeye
-pipeye
+gh actions
 ```
 
 ### Navigation
@@ -75,11 +65,11 @@ pipeye
 
 ## Development
 
-Pipeye is built with:
+gh-actions is built with:
 
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea): Terminal UI framework
 - [Lipgloss](https://github.com/charmbracelet/lipgloss): Style definitions for terminal applications
-- [go-github](https://github.com/google/go-github): GitHub API client for Go
+- [go-gh](https://github.com/cli/go-gh): Go library for the GitHub CLI
 
 ## Credits
 

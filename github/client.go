@@ -1,30 +1,66 @@
 package github
 
 import (
-	"context"
+	"errors"
+	"fmt"
 	"log"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	gh "github.com/google/go-github/v71/github"
+	"github.com/cli/go-gh/v2/pkg/api"
 )
 
 type Client struct {
-	Client *gh.Client
+	Client *api.RESTClient
 }
 
 const (
-	defaultConcurrency = 10
-	defaultTimeout     = 10 * time.Second
-	workflowsPerPage   = 20
-	workflowsRunCount  = 20
-	jobsPerPage        = 10
+	defaultConcurrency  = 10
+	defaultTimeout      = 10 * time.Second
+	workflowsPerPage    = 20
+	workflowRunsPerPage = 20
+	jobsPerPage         = 10
 )
 
-func NewClient(token string) (*Client, error) {
-	client := gh.NewClient(nil).WithAuthToken(token)
+type concurrentResult struct {
+	Value interface{}
+	Error error
+}
+
+func runConcurrent(concurrency int, items []interface{}, fn func(item interface{}) (interface{}, error)) []concurrentResult {
+	results := make([]concurrentResult, len(items))
+	var wg sync.WaitGroup
+	semaphore := make(chan struct{}, concurrency)
+
+	for i, item := range items {
+		wg.Add(1)
+		index := i
+		currentItem := item
+
+		go func() {
+			defer wg.Done()
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			result, err := fn(currentItem)
+			results[index] = concurrentResult{
+				Value: result,
+				Error: err,
+			}
+		}()
+	}
+
+	wg.Wait()
+	return results
+}
+
+func NewClient() (*Client, error) {
+	client, err := api.DefaultRESTClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GitHub client: %w", err)
+	}
 	return &Client{
 		Client: client,
 	}, nil
@@ -32,187 +68,191 @@ func NewClient(token string) (*Client, error) {
 
 // FetchRepositoriesWithWorkflows fetches repositories that have GitHub Actions workflows
 func (c *Client) FetchRepositoriesWithWorkflows(names []string) ([]*Repository, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
-
-	// TODO: proper error management
-	repos, err := c.fetchRepositories(ctx, names)
+	repos, err := c.fetchRepositories(names)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error fetching repositories: %w", err)
 	}
 
-	start := time.Now()
-	log.Printf("Fetching workflows for %d repositories...\n", len(repos))
-
-	var result []*Repository
-	var wg sync.WaitGroup
-	var mutex sync.Mutex
-	semaphore := make(chan struct{}, defaultConcurrency)
-
-	for _, repo := range repos {
-		wg.Add(1)
-		currentRepo := repo
-
-		go func() {
-			defer wg.Done()
-
-			semaphore <- struct{}{}
-			defer func() { <-semaphore }()
-
-			owner, repo := ParseFullName(currentRepo.GetFullName())
-			workflowsWithRuns, error := c.FetchWorkflowsWithRuns(owner, repo)
-
-			if error != nil {
-				log.Printf("Error fetching workflows with runs for %s: %v",
-					currentRepo.GetFullName(), error)
-				return
-			}
-			mutex.Lock()
-			result = append(result, &Repository{currentRepo, workflowsWithRuns, nil})
-			mutex.Unlock()
-		}()
+	if len(repos) == 0 {
+		return nil, nil
 	}
 
-	wg.Wait()
-	log.Printf("Found %d repositories with workflows in %s", len(result), time.Since(start))
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Info.UpdatedAt.After(result[j].Info.UpdatedAt.Time)
+	// Convert to interface slice for the generic function
+	repoItems := make([]interface{}, len(repos))
+	for i, repo := range repos {
+		repoItems[i] = repo
+	}
+
+	results := runConcurrent(defaultConcurrency, repoItems, func(item any) (any, error) {
+		repo := item.(*Repository)
+		owner, repoName := parseFullName(repo.FullName)
+		return c.FetchWorkflowsWithRuns(owner, repoName)
 	})
-	return result, nil
+
+	// Process results
+	var successfulRepos []*Repository
+	for _, res := range results {
+		if res.Error != nil {
+			log.Printf("Error fetching workflows: %v", res.Error)
+			continue
+		}
+		successfulRepos = append(successfulRepos, res.Value.(*Repository))
+	}
+
+	// Sort repositories by update time (most recent first)
+	sort.Slice(successfulRepos, func(i, j int) bool {
+		return successfulRepos[i].UpdatedAt.After(successfulRepos[j].UpdatedAt)
+	})
+
+	return successfulRepos, nil
 }
 
 // FetchWorkflowsWithRuns fetches workflows and their recent runs for a repository
-func (c *Client) FetchWorkflowsWithRuns(owner, repo string) ([]*Workflow, error) {
-	// NOTE: use a new context?
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// Fetch workflows
-	workflows, _, err := c.Client.Actions.ListWorkflows(ctx, owner, repo, &gh.ListOptions{
-		PerPage: workflowsPerPage,
-	})
+func (c *Client) FetchWorkflowsWithRuns(owner, repo string) (*Repository, error) {
+	// Fetch repository info first
+	requestUrlRepo := fmt.Sprintf("repos/%s/%s", owner, repo)
+	var repository Repository
+	err := c.Client.Get(requestUrlRepo, &repository)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch repository %s/%s: %w", owner, repo, err)
 	}
 
-	var result []*Workflow
-	var wgWorkflows sync.WaitGroup
-	var mutexWorkflows sync.Mutex
-	semaphoreWorkflows := make(chan struct{}, defaultConcurrency)
-
-	// Process workflows in parallel
-	for _, workflow := range workflows.Workflows {
-		wgWorkflows.Add(1)
-		currentWorkflow := workflow
-
-		go func() {
-			defer wgWorkflows.Done()
-
-			// Acquire semaphore slot
-			semaphoreWorkflows <- struct{}{}
-			defer func() { <-semaphoreWorkflows }()
-
-			workflowWithRuns := &Workflow{
-				Info: currentWorkflow,
-			}
-
-			// Fetch runs for this workflow
-			runs, _, err := c.Client.Actions.ListWorkflowRunsByID(
-				ctx,
-				owner,
-				repo,
-				currentWorkflow.GetID(),
-				&gh.ListWorkflowRunsOptions{
-					ListOptions: gh.ListOptions{PerPage: workflowsRunCount},
-				},
-			)
-
-			if err != nil {
-				workflowWithRuns.Error = err
-				mutexWorkflows.Lock()
-				result = append(result, workflowWithRuns)
-				mutexWorkflows.Unlock()
-				return
-			}
-
-			// Fetch jobs for each run
-			if runs != nil && len(runs.WorkflowRuns) > 0 {
-				runsWithJobs := make([]*WorkflowRun, len(runs.WorkflowRuns))
-				var wgJobs sync.WaitGroup
-				var mutexJobs sync.Mutex
-
-				for i, run := range runs.WorkflowRuns {
-					wgJobs.Add(1)
-					runIndex := i
-					currentRun := run
-
-					go func() {
-						defer wgJobs.Done()
-
-						runWithJobs := &WorkflowRun{
-							Info: currentRun,
-						}
-
-						jobs, _, err := c.Client.Actions.ListWorkflowJobs(
-							ctx,
-							owner,
-							repo,
-							currentRun.GetID(),
-							&gh.ListWorkflowJobsOptions{
-								ListOptions: gh.ListOptions{PerPage: jobsPerPage},
-							},
-						)
-
-						if err == nil && jobs != nil {
-							runWithJobs.Jobs = jobs.Jobs
-						}
-
-						mutexJobs.Lock()
-						runsWithJobs[runIndex] = runWithJobs
-						mutexJobs.Unlock()
-					}()
-				}
-
-				wgJobs.Wait()
-				workflowWithRuns.Runs = runsWithJobs
-			}
-
-			mutexWorkflows.Lock()
-			result = append(result, workflowWithRuns)
-			mutexWorkflows.Unlock()
-		}()
+	// Fetch workflows for the repository
+	requestUrl := fmt.Sprintf("repos/%s/%s/actions/workflows", owner, repo)
+	var workflowsResponse struct {
+		Workflows []Workflow `json:"workflows"`
 	}
 
-	wgWorkflows.Wait()
-	return result, nil
+	err = c.Client.Get(requestUrl, &workflowsResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch workflows for %s/%s: %w", owner, repo, err)
+	}
+
+	// Convert to interface slice
+	workflowItems := make([]interface{}, len(workflowsResponse.Workflows))
+	for i, workflow := range workflowsResponse.Workflows {
+		workflowItems[i] = workflow
+	}
+
+	results := runConcurrent(defaultConcurrency, workflowItems, func(item interface{}) (interface{}, error) {
+		workflow := item.(Workflow)
+
+		// Fetch runs for this workflow
+		runsUrl := fmt.Sprintf("repos/%s/%s/actions/workflows/%d/runs?per_page=%d",
+			owner, repo, workflow.ID, workflowRunsPerPage)
+
+		var runsResponse struct {
+			TotalCount   int            `json:"total_count"`
+			WorkflowRuns []*WorkflowRun `json:"workflow_runs"`
+		}
+
+		err := c.Client.Get(runsUrl, &runsResponse)
+		if err != nil {
+			workflow.Error = err
+			return &workflow, nil // Return with error set but don't fail
+		}
+
+		// Fetch jobs for each workflow run
+		if len(runsResponse.WorkflowRuns) > 0 {
+			workflow.Runs = c.fetchJobsForRuns(owner, repo, runsResponse.WorkflowRuns)
+		}
+
+		return &workflow, nil
+	})
+
+	// Process results
+	var workflows []*Workflow
+	for _, res := range results {
+		workflows = append(workflows, res.Value.(*Workflow))
+	}
+
+	repository.Workflows = workflows
+	return &repository, nil
 }
 
-// Helper function to fetch repositories
-func (c *Client) fetchRepositories(ctx context.Context, names []string) ([]*gh.Repository, error) {
-	var repos []*gh.Repository
+// fetchJobsForRuns fetches jobs for a list of workflow runs concurrently
+func (c *Client) fetchJobsForRuns(owner, repo string, runs []*WorkflowRun) []*WorkflowRun {
+	// Convert to interface slice
+	runItems := make([]interface{}, len(runs))
+	for i, run := range runs {
+		runItems[i] = run
+	}
 
-	// Fetch repositories from config
-	for _, repoName := range names {
+	results := runConcurrent(defaultConcurrency, runItems, func(item interface{}) (interface{}, error) {
+		run := item.(*WorkflowRun)
+
+		// Fetch jobs for this run
+		jobsUrl := fmt.Sprintf("repos/%s/%s/actions/runs/%d/jobs?per_page=%d",
+			owner, repo, run.ID, jobsPerPage)
+
+		var jobsResponse struct {
+			TotalCount int    `json:"total_count"`
+			Jobs       []*Job `json:"jobs"`
+		}
+
+		err := c.Client.Get(jobsUrl, &jobsResponse)
+		if err == nil {
+			run.Jobs = jobsResponse.Jobs
+		}
+
+		return run, nil // Always return run, even if error occurred
+	})
+
+	// Convert back to WorkflowRun slice, maintaining the original order
+	runsWithJobs := make([]*WorkflowRun, len(runs))
+	for i, res := range results {
+		runsWithJobs[i] = res.Value.(*WorkflowRun)
+	}
+
+	return runsWithJobs
+}
+
+// fetchRepositories retrieves repository information for a list of repository names
+func (c *Client) fetchRepositories(names []string) ([]*Repository, error) {
+	if len(names) == 0 {
+		return nil, errors.New("no repository names provided")
+	}
+
+	// Convert to interface slice
+	nameItems := make([]interface{}, len(names))
+	for i, name := range names {
+		nameItems[i] = name
+	}
+
+	results := runConcurrent(defaultConcurrency, nameItems, func(item interface{}) (interface{}, error) {
+		repoName := item.(string)
+
 		repoParts := strings.Split(repoName, "/")
 		if len(repoParts) != 2 {
-			// TODO: format should be checked in config
-			log.Printf("Invalid repository format: %s (expected 'owner/repo')", repoName)
-			continue
-		}
-		repo, _, err := c.Client.Repositories.Get(ctx, repoParts[0], repoParts[1])
-		if err != nil {
-			log.Printf("Error fetching %s: %s", repoName, err)
-			continue
+			return nil, fmt.Errorf("invalid repository format: %s (expected 'owner/repo')", repoName)
 		}
 
-		repos = append(repos, repo)
+		requestUrl := fmt.Sprintf("repos/%s/%s", repoParts[0], repoParts[1])
+		var response Repository
+
+		err := c.Client.Get(requestUrl, &response)
+		if err != nil {
+			return nil, err
+		}
+
+		return &response, nil
+	})
+
+	// Process results
+	var repos []*Repository
+	for _, res := range results {
+		if res.Error != nil {
+			log.Printf("Error fetching %v: %v", res.Value, res.Error)
+			continue
+		}
+		repos = append(repos, res.Value.(*Repository))
 	}
 
 	return repos, nil
 }
 
-// ParseFullName splits a full repository name into owner and repo parts
-func ParseFullName(fullName string) (string, string) {
+// parseFullName splits a full repository name into owner and repo parts
+func parseFullName(fullName string) (string, string) {
 	parts := strings.Split(fullName, "/")
 	if len(parts) == 2 {
 		return parts[0], parts[1]
