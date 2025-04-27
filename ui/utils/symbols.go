@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/cpaluszek/pipeye/ui/context"
+	"github.com/cpaluszek/gh-actions/ui/context"
 )
 
 func GetRunEventSymbol(ctx *context.Context, event string) string {

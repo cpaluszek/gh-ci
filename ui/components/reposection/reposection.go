@@ -4,12 +4,12 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/cpaluszek/pipeye/github"
-	"github.com/cpaluszek/pipeye/ui/commands"
-	"github.com/cpaluszek/pipeye/ui/components/table"
-	"github.com/cpaluszek/pipeye/ui/constants"
-	"github.com/cpaluszek/pipeye/ui/context"
-	"github.com/cpaluszek/pipeye/ui/section"
+	"github.com/cpaluszek/gh-actions/github"
+	"github.com/cpaluszek/gh-actions/ui/commands"
+	"github.com/cpaluszek/gh-actions/ui/components/table"
+	"github.com/cpaluszek/gh-actions/ui/constants"
+	"github.com/cpaluszek/gh-actions/ui/context"
+	"github.com/cpaluszek/gh-actions/ui/section"
 )
 
 type Model struct {

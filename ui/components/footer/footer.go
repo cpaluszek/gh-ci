@@ -2,7 +2,7 @@ package footer
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/cpaluszek/pipeye/ui/context"
+	"github.com/cpaluszek/gh-actions/ui/context"
 )
 
 type Model struct {

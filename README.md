@@ -12,7 +12,7 @@ A terminal UI application for monitoring your GitHub Actions workflows and runs.
 ## Requirements
 
 ### Fonts
-Pipeye uses Nerd Font icons for workflow and job status indicators. For the best experience:
+gh-actions uses Nerd Font icons for workflow and job status indicators. For the best experience:
 
 1. Install a [Nerd Font](https://www.nerdfonts.com/font-downloads) compatible font of your choice
 2. Configure your terminal to use the installed Nerd Font
@@ -65,7 +65,7 @@ gh actions
 
 ## Development
 
-Pipeye is built with:
+gh-actions is built with:
 
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea): Terminal UI framework
 - [Lipgloss](https://github.com/charmbracelet/lipgloss): Style definitions for terminal applications

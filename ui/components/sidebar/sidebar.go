@@ -6,10 +6,10 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/cpaluszek/pipeye/github"
-	"github.com/cpaluszek/pipeye/ui/constants"
-	"github.com/cpaluszek/pipeye/ui/context"
-	"github.com/cpaluszek/pipeye/ui/utils"
+	"github.com/cpaluszek/gh-actions/github"
+	"github.com/cpaluszek/gh-actions/ui/constants"
+	"github.com/cpaluszek/gh-actions/ui/context"
+	"github.com/cpaluszek/gh-actions/ui/utils"
 )
 
 type Model struct {

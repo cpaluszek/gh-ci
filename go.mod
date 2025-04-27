@@ -1,4 +1,4 @@
-module github.com/cpaluszek/pipeye
+module github.com/cpaluszek/gh-actions
 
 go 1.24.2
 
