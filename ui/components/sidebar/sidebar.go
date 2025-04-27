@@ -10,7 +10,6 @@ import (
 	"github.com/cpaluszek/pipeye/github"
 	"github.com/cpaluszek/pipeye/ui/constants"
 	"github.com/cpaluszek/pipeye/ui/context"
-	"github.com/cpaluszek/pipeye/ui/styles"
 	"github.com/cpaluszek/pipeye/ui/utils"
 )
 
@@ -39,7 +38,7 @@ func (m Model) View() string {
 	height := m.ctx.MainContentHeight
 	width := constants.SideBarWidth
 
-	style := styles.SideBarStyle.
+	style := m.ctx.Styles.SideBar.
 		Height(height).
 		MaxHeight(height).
 		Width(width).
@@ -71,13 +70,13 @@ func (m *Model) UpdateProgramContext(ctx *context.Context) {
 
 func (m *Model) GenerateRepoSidebarContent(repo *github.Repository) {
 	content := []string{
-		styles.TitleStyle.Render("Repository: " + repo.GetName()),
+		m.ctx.Styles.Title.Render("Repository: " + repo.GetName()),
 		"",
 	}
 
 	// If no workflows, show message and return
 	if len(repo.Workflows) == 0 || len(repo.Workflows[0].Runs) == 0 {
-		content = append(content, styles.DefaultStyle.Render("No workflows found"))
+		content = append(content, m.ctx.Styles.Default.Render("No workflows found"))
 		m.SetContent(lipgloss.JoinVertical(lipgloss.Left, content...))
 		return
 	}
@@ -85,7 +84,7 @@ func (m *Model) GenerateRepoSidebarContent(repo *github.Repository) {
 	workflowDisplayHeight := 5
 	for i, workflow := range repo.Workflows {
 		if len(content) >= m.viewport.Height-workflowDisplayHeight {
-			content = append(content, styles.DefaultStyle.Render(fmt.Sprintf("\n+ %d more workflows...", len(repo.Workflows)-i)))
+			content = append(content, m.ctx.Styles.Default.Render(fmt.Sprintf("\n+ %d more workflows...", len(repo.Workflows)-i)))
 			break
 		}
 
@@ -97,19 +96,19 @@ func (m *Model) GenerateRepoSidebarContent(repo *github.Repository) {
 
 		workflowName := utils.TruncateString(*workflow.Info.Name, constants.SideBarWidth-4)
 
-		createdTime := styles.DefaultStyle.Render(utils.FormatTime(latestRun.GetCreatedAt().Time))
-		statusDuration := utils.GetWorkflowRunStatus(latestRun) + " · " + createdTime
+		createdTime := m.ctx.Styles.Default.Render(utils.FormatTime(latestRun.GetCreatedAt().Time))
+		statusDuration := utils.GetWorkflowRunStatus(m.ctx, latestRun) + " · " + createdTime
 
 		commitMsg := strings.Split(latestRun.GetHeadCommit().GetMessage(), "\n")[0]
 
-		eventIcon := utils.GetRunEventSymbol(*latestRun.Event)
+		eventIcon := utils.GetRunEventSymbol(m.ctx, *latestRun.Event)
 
-		content = append(content, styles.TitleStyle.Render(workflowName))
-		content = append(content, styles.DefaultStyle.Render(statusDuration))
-		content = append(content, styles.DefaultStyle.Render(eventIcon+latestRun.GetEvent()+" · "+commitMsg))
+		content = append(content, m.ctx.Styles.Title.Render(workflowName))
+		content = append(content, m.ctx.Styles.Default.Render(statusDuration))
+		content = append(content, m.ctx.Styles.Default.Render(eventIcon+latestRun.GetEvent()+" · "+commitMsg))
 
 		if i < len(repo.Workflows)-1 {
-			content = append(content, styles.DefaultStyle.Render(""))
+			content = append(content, m.ctx.Styles.Default.Render(""))
 		}
 	}
 
@@ -118,23 +117,23 @@ func (m *Model) GenerateRepoSidebarContent(repo *github.Repository) {
 
 func (m *Model) GenerateWorkflowSidebarContent(workflow *github.WorkflowRun) {
 	content := []string{
-		styles.TitleStyle.Render("Workflow: " + workflow.GetName()),
+		m.ctx.Styles.Title.Render("Workflow: " + workflow.GetName()),
 		"",
 	}
 
 	if len(workflow.Jobs) > 0 {
 		for _, job := range workflow.Jobs {
-			content = append(content, styles.TitleStyle.Render(*job.Name))
-			status := utils.GetJobStatusSymbol(job.GetStatus(), job.GetConclusion())
+			content = append(content, m.ctx.Styles.Title.Render(*job.Name))
+			status := utils.GetJobStatusSymbol(m.ctx, job.GetStatus(), job.GetConclusion())
 			status = utils.CleanANSIEscapes(status) + job.GetConclusion()
-			content = append(content, styles.DefaultStyle.Render(status))
+			content = append(content, m.ctx.Styles.Default.Render(status))
 			if job.GetConclusion() != "skipped" {
-				content = append(content, styles.DefaultStyle.Render("Duration: "+utils.GetJobDuration(job)))
+				content = append(content, m.ctx.Styles.Default.Render("Duration: "+utils.GetJobDuration(job)))
 			}
 			content = append(content, "")
 		}
 	} else {
-		content = append(content, styles.DefaultStyle.Render("No jobs found"))
+		content = append(content, m.ctx.Styles.Default.Render("No jobs found"))
 	}
 
 	m.SetContent(lipgloss.JoinVertical(lipgloss.Left, content...))
@@ -142,7 +141,7 @@ func (m *Model) GenerateWorkflowSidebarContent(workflow *github.WorkflowRun) {
 
 func (m *Model) GenerateRunSidebarContent(run *github.Job) {
 	content := []string{
-		styles.TitleStyle.Render("Run: " + run.GetName()),
+		m.ctx.Styles.Title.Render("Run: " + run.GetName()),
 		"",
 	}
 
@@ -150,7 +149,9 @@ func (m *Model) GenerateRunSidebarContent(run *github.Job) {
 		if step.GetName() == "" {
 			continue
 		}
-		content = append(content, styles.TitleStyle.Render(*step.Name))
+		content = append(content, m.ctx.Styles.Title.Render(*step.Name))
+		status := utils.GetJobStatusSymbol(m.ctx, step.GetStatus(), step.GetConclusion()) + "· " + step.GetConclusion()
+		content = append(content, m.ctx.Styles.Default.Render("Status: "+status))
 		content = append(content, "")
 	}
 

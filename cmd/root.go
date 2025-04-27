@@ -4,6 +4,7 @@ import (
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/cpaluszek/pipeye/config"
 	"github.com/cpaluszek/pipeye/ui"
 )
 
@@ -20,7 +21,12 @@ func Execute() {
 		}
 	}()
 
-	model := ui.NewModel()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal("Failed to load config:", err)
+	}
+
+	model := ui.NewModel(cfg)
 
 	p := tea.NewProgram(
 		model,

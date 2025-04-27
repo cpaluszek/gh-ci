@@ -147,18 +147,18 @@ func (m Model) BuildRows() []table.Row {
 
 		duration := utils.GetWorkflowRunDuration(run)
 		commitMsg := run.GetHeadCommit().GetMessage()
-		displayStatus := utils.GetWorkflowRunStatus(run)
+		displayStatus := utils.GetWorkflowRunStatus(m.Ctx, run)
 
 		// Build jobs indicators with symbols
 		jobs := ""
 		for _, job := range runInfo.Run.Jobs {
-			jobs += utils.GetJobStatusSymbol(job.GetStatus(), job.GetConclusion())
+			jobs += utils.GetJobStatusSymbol(m.Ctx, job.GetStatus(), job.GetConclusion())
 		}
 		jobs = utils.CleanANSIEscapes(jobs)
 
 		// Table row
 		rows = append(rows, table.Row{
-			" " + utils.GetRunEventSymbol(*run.Event),
+			" " + utils.GetRunEventSymbol(m.Ctx, *run.Event),
 			workflow.GetName(),
 			displayStatus,
 			run.GetHeadBranch(),

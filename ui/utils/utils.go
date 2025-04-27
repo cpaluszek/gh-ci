@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cpaluszek/pipeye/ui/context"
 	gh "github.com/google/go-github/v71/github"
 )
 
@@ -69,13 +70,13 @@ func GetWorkflowRunDuration(wr *gh.WorkflowRun) string {
 	return duration
 }
 
-func GetWorkflowRunStatus(wr *gh.WorkflowRun) string {
+func GetWorkflowRunStatus(ctx *context.Context, wr *gh.WorkflowRun) string {
 	if wr == nil {
 		return ""
 	}
 	status := wr.GetStatus()
 	conclusion := wr.GetConclusion()
-	statusSymbol := GetStatusSymbol(status, conclusion)
+	statusSymbol := GetStatusSymbol(ctx, status, conclusion)
 	content := ""
 	if conclusion != "" && status == "completed" {
 		content = statusSymbol + conclusion

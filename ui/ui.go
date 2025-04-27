@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cpaluszek/pipeye/config"
 	"github.com/cpaluszek/pipeye/github"
 	"github.com/cpaluszek/pipeye/ui/commands"
 	"github.com/cpaluszek/pipeye/ui/components/footer"
@@ -15,6 +16,7 @@ import (
 	"github.com/cpaluszek/pipeye/ui/context"
 	"github.com/cpaluszek/pipeye/ui/runsection"
 	"github.com/cpaluszek/pipeye/ui/section"
+	"github.com/cpaluszek/pipeye/ui/styles"
 	"github.com/cpaluszek/pipeye/ui/workflowssection"
 )
 
@@ -27,14 +29,21 @@ type Model struct {
 	sidebar  sidebar.Model
 }
 
-func NewModel() Model {
+func NewModel(cfg *config.Config) Model {
+	theme := styles.DefaultTheme
+	styles := styles.BuildStyles(*theme)
 	m := Model{
-		footer: footer.NewModel(),
 		ctx: &context.Context{
 			ScreenWidth:  0,
 			ScreenHeight: 0,
+			Config:       cfg,
+			Theme:        theme,
+			Styles:       &styles,
 		},
 	}
+	f := footer.NewModel(m.ctx)
+	m.footer = f
+
 	s := reposection.NewModel(m.ctx)
 	m.repos = &s
 	w := workflowssection.NewModel(m.ctx)
@@ -49,7 +58,7 @@ func NewModel() Model {
 
 func (m Model) Init() tea.Cmd {
 	m.ctx.View = context.RepoView
-	return commands.InitConfig
+	return commands.InitClient(m.ctx.Config.Github.Token)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -90,10 +99,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		}
-	case commands.ConfigInitMsg:
-		m.ctx.Config = msg.Config
-		return m, commands.InitClient(m.ctx.Config.Github.Token)
-
 	case commands.ClientInitMsg:
 		m.ctx.Client = msg.Client
 		cmds = append(cmds, m.repos.Fetch()...)
@@ -177,7 +182,7 @@ func (m *Model) GetCurrentSection() section.Section {
 	case context.RunView:
 		return m.run
 	}
-	return m.repos
+	return nil
 }
 
 func (m *Model) OnSelectedRowChanged() {

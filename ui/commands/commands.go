@@ -38,18 +38,6 @@ type ErrorMsg struct {
 }
 
 // Commands
-func InitConfig() tea.Msg {
-	cfg, err := config.Load()
-	if err != nil {
-		return ErrorMsg{
-			Error: err,
-		}
-	}
-	return ConfigInitMsg{
-		Config: cfg,
-	}
-}
-
 func InitClient(token string) tea.Cmd {
 	return func() tea.Msg {
 		client, err := github.NewClient(token)

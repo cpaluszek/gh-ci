@@ -7,7 +7,6 @@ import (
 	"github.com/cpaluszek/pipeye/ui/components/table"
 	"github.com/cpaluszek/pipeye/ui/context"
 	"github.com/cpaluszek/pipeye/ui/section"
-	"github.com/cpaluszek/pipeye/ui/styles"
 	"github.com/cpaluszek/pipeye/ui/utils"
 )
 
@@ -88,12 +87,12 @@ func (m Model) BuildRows() []table.Row {
 
 	var rows []table.Row
 	for _, job := range m.RunWithJobs.Jobs {
-		status := utils.GetJobStatusSymbol(job.GetStatus(), job.GetConclusion()) + " " + job.GetConclusion()
+		status := utils.GetJobStatusSymbol(m.Ctx, job.GetStatus(), job.GetConclusion()) + " " + job.GetConclusion()
 		status = utils.CleanANSIEscapes(status)
 		rows = append(rows, table.Row{
 			job.GetName(),
-			styles.DefaultStyle.Render(status),
-			styles.DefaultStyle.Render(utils.GetJobDuration(job)),
+			m.Ctx.Styles.Default.Render(status),
+			m.Ctx.Styles.Default.Render(utils.GetJobDuration(job)),
 		})
 	}
 

@@ -1,80 +1,82 @@
 package utils
 
-import "github.com/cpaluszek/pipeye/ui/styles"
+import (
+	"github.com/cpaluszek/pipeye/ui/context"
+)
 
-func GetRunEventSymbol(event string) string {
+func GetRunEventSymbol(ctx *context.Context, event string) string {
 	switch event {
 	case "pull_request":
-		return styles.PullRequestStyle.Render(styles.PullRequestSymbol)
+		return ctx.Styles.PullRequest.Render(ctx.Theme.Symbols.PullRequest)
 	case "push":
-		return styles.PushStyle.Render(styles.PushSymbol)
+		return ctx.Styles.Push.Render(ctx.Theme.Symbols.Push)
 	case "schedule":
-		return styles.ScheduleStyle.Render(styles.ScheduleSymbol)
+		return ctx.Styles.Schedule.Render(ctx.Theme.Symbols.Schedule)
 	case "release":
-		return styles.TagStyle.Render(styles.TagStmbol)
+		return ctx.Styles.Tag.Render(ctx.Theme.Symbols.Tag)
 	case "repository_dispatch":
-		return styles.WebHookStyle.Render(styles.WebhookSymbol)
+		return ctx.Styles.WebHook.Render(ctx.Theme.Symbols.Webhook)
 	case "workflow_dispatch", "dynamic":
-		return styles.PlayStyle.Render(styles.PlaySymbol)
+		return ctx.Styles.Play.Render(ctx.Theme.Symbols.Play)
 	case "fork":
-		return styles.ForkStyle.Render(styles.ForkSymbol)
+		return ctx.Styles.Fork.Render(ctx.Theme.Symbols.Fork)
 	case "deployment":
-		return styles.DeploymentStyle.Render(styles.DeploymentSymbol)
+		return ctx.Styles.Deployment.Render(ctx.Theme.Symbols.Deployment)
 	case "issue":
-		return styles.IssueStyle.Render(styles.IssueSymbol)
+		return ctx.Styles.Issue.Render(ctx.Theme.Symbols.Issue)
 	default:
 		return ""
 	}
 }
 
-func GetJobStatusSymbol(status, conclusion string) string {
+func GetJobStatusSymbol(ctx *context.Context, status, conclusion string) string {
 	switch status {
 	case "completed":
 		switch conclusion {
 		case "success":
-			return styles.SuccessStyle.Render(styles.JobSuccessDot)
+			return ctx.Styles.Success.Render(ctx.Theme.Symbols.JobSuccess)
 		case "failure", "startup_failure", "timed_out", "action_required":
-			return styles.FailureStyle.Render(styles.JobFailureDot)
+			return ctx.Styles.Failure.Render(ctx.Theme.Symbols.JobFailure)
 		case "cancelled":
-			return styles.CanceledStyle.Render(styles.JobCanceledDot)
+			return ctx.Styles.Canceled.Render(ctx.Theme.Symbols.JobCanceled)
 		case "skipped":
-			return styles.SkippedStyle.Render(styles.JobSkippedDot)
+			return ctx.Styles.Skipped.Render(ctx.Theme.Symbols.JobSkipped)
 		case "neutral":
-			return styles.DefaultStyle.Render(styles.NeutralSymbol)
+			return ctx.Styles.Default.Render(ctx.Theme.Symbols.Neutral)
 		default:
-			return styles.DefaultStyle.Render(styles.NeutralSymbol)
+			return ctx.Styles.Default.Render(ctx.Theme.Symbols.Neutral)
 		}
 	case "queued", "waiting", "pending", "requested":
-		return styles.InProgressStyle.Render(styles.QueuedSymbol)
+		return ctx.Styles.InProgress.Render(ctx.Theme.Symbols.Queued)
 	case "in_progress":
-		return styles.InProgressStyle.Render(styles.InProgressSymbol)
+		return ctx.Styles.InProgress.Render(ctx.Theme.Symbols.InProgress)
 	default:
-		return styles.DefaultStyle.Render(styles.NeutralSymbol)
+		return ctx.Styles.Default.Render(ctx.Theme.Symbols.Neutral)
 	}
 }
 
-func GetStatusSymbol(status, conclusion string) string {
+func GetStatusSymbol(ctx *context.Context, status, conclusion string) string {
 	switch status {
 	case "completed":
 		switch conclusion {
 		case "success":
-			return styles.SuccessStyle.Render(styles.SuccessSymbol)
+			return ctx.Styles.Success.Render(ctx.Theme.Symbols.Success)
 		case "failure", "timed_out", "startup_failure":
-			return styles.FailureStyle.Render(styles.FailureSymbol)
+			return ctx.Styles.Failure.Render(ctx.Theme.Symbols.Failure)
 		case "cancelled":
-			return styles.CanceledStyle.Render(styles.CanceledSymbol)
+			return ctx.Styles.Canceled.Render(ctx.Theme.Symbols.Canceled)
 		case "skipped":
-			return styles.SkippedStyle.Render(styles.SkippedSymbol)
+			return ctx.Styles.Skipped.Render(ctx.Theme.Symbols.Skipped)
 		case "neutral":
-			return styles.DefaultStyle.Render(styles.NeutralSymbol)
+			return ctx.Styles.Default.Render(ctx.Theme.Symbols.Neutral)
 		default:
-			return styles.DefaultStyle.Render(styles.NeutralSymbol)
+			return ctx.Styles.Default.Render(ctx.Theme.Symbols.Neutral)
 		}
 	case "in_progress":
-		return styles.InProgressStyle.Render(styles.InProgressSymbol)
+		return ctx.Styles.InProgress.Render(ctx.Theme.Symbols.InProgress)
 	case "queued":
-		return styles.InProgressStyle.Render(styles.QueuedSymbol)
+		return ctx.Styles.InProgress.Render(ctx.Theme.Symbols.Queued)
 	default:
-		return styles.DefaultStyle.Render(styles.NeutralSymbol)
+		return ctx.Styles.Default.Render(ctx.Theme.Symbols.Neutral)
 	}
 }
