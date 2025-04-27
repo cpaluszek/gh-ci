@@ -145,9 +145,7 @@ func (m Model) BuildRows() []table.Row {
 		workflow := runInfo.Workflow
 
 		duration := utils.GetWorkflowRunDuration(run)
-		// TODO: fix commit
-		commitMsg := ""
-		// commitMsg := run.GetHeadCommit().GetMessage()
+		commitMsg := run.HeadCommit.Message
 		displayStatus := utils.GetWorkflowRunStatus(m.Ctx, run)
 
 		// Build jobs indicators with symbols

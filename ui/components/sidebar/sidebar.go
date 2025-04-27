@@ -2,6 +2,7 @@ package sidebar
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -98,9 +99,7 @@ func (m *Model) GenerateRepoSidebarContent(repo *github.Repository) {
 		createdTime := m.ctx.Styles.Default.Render(utils.FormatTime(latestRun.CreatedAt))
 		statusDuration := utils.GetWorkflowRunStatus(m.ctx, latestRun) + " · " + createdTime
 
-		// commitMsg := strings.Split(latestRun.GetHeadCommit().GetMessage(), "\n")[0]
-		// TODO: fix commmit
-		commitMsg := ""
+		commitMsg := strings.Split(latestRun.HeadCommit.Message, "\n")[0]
 
 		eventIcon := utils.GetRunEventSymbol(m.ctx, latestRun.Event)
 
