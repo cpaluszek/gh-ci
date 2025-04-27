@@ -38,9 +38,9 @@ type ErrorMsg struct {
 }
 
 // Commands
-func InitClient(token string) tea.Cmd {
+func InitClient() tea.Cmd {
 	return func() tea.Msg {
-		client, err := github.NewClient(token)
+		client, err := github.NewClient()
 		if err != nil {
 			return ErrorMsg{
 				Error: err,

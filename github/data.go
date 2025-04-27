@@ -1,89 +1,99 @@
 package github
 
 import (
-	"fmt"
-
-	gh "github.com/google/go-github/v71/github"
+	"time"
 )
 
-// TODO: clarify types and variables naming
 type Repository struct {
-	Info      *gh.Repository
-	Workflows []*Workflow
-	Error     error
+	ID             int64       `json:"id"` // Changed from string to int64
+	Name           string      `json:"name"`
+	FullName       string      `json:"full_name"`
+	URL            string      `json:"html_url"`
+	UpdatedAt      time.Time   `json:"updated_at"`
+	Language       string      `json:"language"`
+	IsPrivate      bool        `json:"private"`
+	StargazerCount int         `json:"stargazers_count"`
+	Workflows      []*Workflow `json:"-"` // Not directly from the API
+	Error          error       `json:"-"` // Not from the API
 }
 
+// Workflow represents a GitHub Actions workflow
 type Workflow struct {
-	Info  *gh.Workflow
-	Runs  []*WorkflowRun
-	Error error
+	ID    int64          `json:"id"`
+	Name  string         `json:"name"`
+	State string         `json:"state"`
+	URL   string         `json:"html_url"`
+	Runs  []*WorkflowRun `json:"-"` // Not from direct API response
+	Error error          `json:"-"` // Not from API
 }
 
+// WorkflowRun represents a run of a GitHub Actions workflow
 type WorkflowRun struct {
-	Info *gh.WorkflowRun
-	Jobs []*gh.WorkflowJob
+	ID           int64     `json:"id"`
+	Status       string    `json:"status"`
+	Conclusion   string    `json:"conclusion"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	DisplayTitle string    `json:"display_title"`
+	Event        string    `json:"event"`
+	URL          string    `json:"html_url"`
+	HeadBranch   string    `json:"head_branch"`
+	HeadCommit   Commit    `json:"head_commit"`
+	Jobs         []*Job    `json:"-"` // Fetched separately
 }
 
+// Commit represents a git commit
+type Commit struct {
+	Message string `json:"message"`
+	ID      string `json:"id"`
+}
+
+// Job represents a job in a workflow run
 type Job struct {
-	Job *gh.WorkflowJob
+	ID          int64     `json:"id"`
+	Name        string    `json:"name"`
+	Status      string    `json:"status"`
+	Conclusion  string    `json:"conclusion"`
+	StartedAt   time.Time `json:"started_at"`
+	CompletedAt time.Time `json:"completed_at"`
+	URL         string    `json:"html_url"`
+	Steps       []Step    `json:"steps"`
+}
+
+// Step represents a step in a workflow job
+type Step struct {
+	Name       string `json:"name"`
+	Status     string `json:"status"`
+	Conclusion string `json:"conclusion"`
+	Number     int    `json:"number"`
+	Completed  bool   `json:"completed"`
 }
 
 type RowData interface {
-	GetID() string
 	GetName() string
 	GetURL() string
 }
 
-func (r Repository) GetID() string {
-	return r.Info.GetNodeID()
-}
-
 func (r Repository) GetName() string {
-	return r.Info.GetFullName()
+	return r.Name
 }
 
 func (r Repository) GetURL() string {
-	return r.Info.GetHTMLURL()
-}
-
-func (w WorkflowRun) GetID() string {
-	if w.Info == nil {
-		return ""
-	}
-	return fmt.Sprintf("%d", w.Info.GetID())
+	return r.URL
 }
 
 func (w WorkflowRun) GetName() string {
-	if w.Info == nil {
-		return ""
-	}
-	return w.Info.GetDisplayTitle()
+	return w.DisplayTitle
 }
 
 func (w WorkflowRun) GetURL() string {
-	if w.Info == nil {
-		return ""
-	}
-	return w.Info.GetHTMLURL()
-}
-
-func (j Job) GetID() string {
-	if j.Job == nil {
-		return ""
-	}
-	return j.Job.GetNodeID()
+	return w.URL
 }
 
 func (j Job) GetName() string {
-	if j.Job == nil {
-		return ""
-	}
-	return j.Job.GetName()
+	return j.Name
 }
 
 func (j Job) GetURL() string {
-	if j.Job == nil {
-		return ""
-	}
-	return j.Job.GetHTMLURL()
+	return j.URL
 }

@@ -58,7 +58,7 @@ func NewModel(cfg *config.Config) Model {
 
 func (m Model) Init() tea.Cmd {
 	m.ctx.View = context.RepoView
-	return commands.InitClient(m.ctx.Config.Github.Token)
+	return commands.InitClient()
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

@@ -11,11 +11,10 @@ import (
 	"github.com/cpaluszek/pipeye/ui/context"
 	"github.com/cpaluszek/pipeye/ui/section"
 	"github.com/cpaluszek/pipeye/ui/utils"
-	gh "github.com/google/go-github/v71/github"
 )
 
 type WorkflowRunInfo struct {
-	Workflow *gh.Workflow
+	Workflow *github.Workflow
 	Run      *github.WorkflowRun
 }
 
@@ -99,7 +98,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			if currentIndex < 0 || currentIndex >= len(m.allRuns) {
 				return m, nil
 			}
-			url := m.allRuns[currentIndex].Run.Info.GetHTMLURL()
+			url := m.allRuns[currentIndex].Run.URL
 			if url == "" {
 				return m, nil
 			}
@@ -125,7 +124,7 @@ func (m *Model) buildRunsList() []WorkflowRunInfo {
 		}
 		for _, runWithJob := range workflow.Runs {
 			runs = append(runs, WorkflowRunInfo{
-				Workflow: workflow.Info,
+				Workflow: workflow,
 				Run:      runWithJob,
 			})
 		}
@@ -133,7 +132,7 @@ func (m *Model) buildRunsList() []WorkflowRunInfo {
 
 	// Sort by creation time (most recent first)
 	sort.Slice(runs, func(i, j int) bool {
-		return runs[i].Run.Info.GetCreatedAt().After(runs[j].Run.Info.GetCreatedAt().Time)
+		return runs[i].Run.CreatedAt.After(runs[j].Run.CreatedAt)
 	})
 
 	return runs
@@ -142,27 +141,29 @@ func (m *Model) buildRunsList() []WorkflowRunInfo {
 func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
 	for _, runInfo := range m.allRuns {
-		run := runInfo.Run.Info
+		run := runInfo.Run
 		workflow := runInfo.Workflow
 
 		duration := utils.GetWorkflowRunDuration(run)
-		commitMsg := run.GetHeadCommit().GetMessage()
+		// TODO: fix commit
+		commitMsg := ""
+		// commitMsg := run.GetHeadCommit().GetMessage()
 		displayStatus := utils.GetWorkflowRunStatus(m.Ctx, run)
 
 		// Build jobs indicators with symbols
 		jobs := ""
 		for _, job := range runInfo.Run.Jobs {
-			jobs += utils.GetJobStatusSymbol(m.Ctx, job.GetStatus(), job.GetConclusion())
+			jobs += utils.GetJobStatusSymbol(m.Ctx, job.Status, job.Conclusion)
 		}
 		jobs = utils.CleanANSIEscapes(jobs)
 
 		// Table row
 		rows = append(rows, table.Row{
-			" " + utils.GetRunEventSymbol(m.Ctx, *run.Event),
-			workflow.GetName(),
+			" " + utils.GetRunEventSymbol(m.Ctx, run.Event),
+			workflow.Name,
 			displayStatus,
-			run.GetHeadBranch(),
-			utils.FormatTime(run.GetCreatedAt().Time),
+			run.HeadBranch,
+			utils.FormatTime(run.CreatedAt),
 			duration,
 			jobs,
 			commitMsg,

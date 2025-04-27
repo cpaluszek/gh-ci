@@ -1,8 +1,6 @@
 package config
 
 import (
-	"fmt"
-
 	"github.com/spf13/viper"
 )
 
@@ -11,7 +9,6 @@ type Config struct {
 }
 
 type GithubConfig struct {
-	Token string
 	Repositories []string
 }
 
@@ -28,10 +25,6 @@ func Load() (*Config, error) {
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, err
-	}
-
-	if cfg.Github.Token == "" {
-		return nil, fmt.Errorf("github token is required. set it in config file")
 	}
 
 	return &cfg, nil

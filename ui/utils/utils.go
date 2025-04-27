@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cpaluszek/pipeye/github"
 	"github.com/cpaluszek/pipeye/ui/context"
-	gh "github.com/google/go-github/v71/github"
 )
 
 func FormatTime(t time.Time) string {
@@ -56,13 +56,13 @@ func CleanANSIEscapes(s string) string {
 	return strings.ReplaceAll(s, "\x1b[0m", "")
 }
 
-func GetWorkflowRunDuration(wr *gh.WorkflowRun) string {
+func GetWorkflowRunDuration(wr *github.WorkflowRun) string {
 	if wr == nil {
 		return ""
 	}
 	var duration string
-	if wr.GetUpdatedAt().After(wr.GetCreatedAt().Time) {
-		durationTime := wr.GetUpdatedAt().Sub(wr.GetCreatedAt().Time)
+	if wr.UpdatedAt.After(wr.CreatedAt) {
+		durationTime := wr.UpdatedAt.Sub(wr.CreatedAt)
 		duration = formatDuration(durationTime)
 	} else {
 		duration = "running"
@@ -70,12 +70,12 @@ func GetWorkflowRunDuration(wr *gh.WorkflowRun) string {
 	return duration
 }
 
-func GetWorkflowRunStatus(ctx *context.Context, wr *gh.WorkflowRun) string {
+func GetWorkflowRunStatus(ctx *context.Context, wr *github.WorkflowRun) string {
 	if wr == nil {
 		return ""
 	}
-	status := wr.GetStatus()
-	conclusion := wr.GetConclusion()
+	status := wr.Status
+	conclusion := wr.Conclusion
 	statusSymbol := GetStatusSymbol(ctx, status, conclusion)
 	content := ""
 	if conclusion != "" && status == "completed" {
@@ -89,13 +89,13 @@ func GetWorkflowRunStatus(ctx *context.Context, wr *gh.WorkflowRun) string {
 	return CleanANSIEscapes(content)
 }
 
-func GetJobDuration(job *gh.WorkflowJob) string {
+func GetJobDuration(job *github.Job) string {
 	if job == nil {
 		return ""
 	}
 	var duration string
-	if job.GetCompletedAt().After(job.GetCreatedAt().Time) {
-		durationTime := job.GetCompletedAt().Sub(job.GetStartedAt().Time)
+	if job.CompletedAt.After(job.StartedAt) {
+		durationTime := job.CompletedAt.Sub(job.StartedAt)
 		duration = formatDuration(durationTime)
 	} else {
 		duration = "running"

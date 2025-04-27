@@ -12,7 +12,6 @@ const (
 	RepoView     ViewType = "repo"
 	WorkflowView ViewType = "workflow"
 	RunView      ViewType = "run"
-	NoView       ViewType = "no-view"
 )
 
 type Context struct {

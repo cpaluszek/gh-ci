@@ -76,7 +76,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			if currentIndex < 0 || currentIndex >= len(m.repos) {
 				return m, nil
 			}
-			url := m.repos[currentIndex].Info.GetHTMLURL()
+			url := m.repos[currentIndex].URL
 			if url == "" {
 				return m, nil
 			}
@@ -96,25 +96,21 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
-	for _, repoData := range m.repos {
-		repo := repoData.Info
-		language := ""
-		if repo.Language != nil {
-			language = *repo.Language
-		}
-		stars := "0"
-		if repo.StargazersCount != nil {
-			stars = fmt.Sprintf("%d", *repo.StargazersCount)
-		}
-		updated := "Unknown"
-		if repo.UpdatedAt != nil {
-			updated = repo.UpdatedAt.Format("Jan 2, 2006")
+	for _, repo := range m.repos {
+		language := repo.Language
+		stars := fmt.Sprintf("%d", repo.StargazerCount)
+		updated := repo.UpdatedAt.Format("Jan 2, 2006")
+		visibility := ""
+		if repo.IsPrivate {
+			visibility = "Private"
+		} else {
+			visibility = "Public"
 		}
 		rows = append(rows, table.Row{
-			*repo.FullName,
+			repo.Name,
 			language,
 			stars,
-			repo.GetVisibility(),
+			visibility,
 			updated,
 		})
 	}

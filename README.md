@@ -37,11 +37,9 @@ sudo mv pipeye /usr/local/bin/
 
 ## Configuration
 
-Pipeye requires a GitHub personal access token to access your repositories and workflows. Create a config.yaml file in the same directory where you run the application:
 
 ```yaml
 github:
-  token: your-github-token
   repositories:
     - owner/repo1
     - owner/repo2
