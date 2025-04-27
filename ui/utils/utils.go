@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cpaluszek/gh-actions/github"
-	"github.com/cpaluszek/gh-actions/ui/context"
+	"github.com/cpaluszek/gh-ci/github"
+	"github.com/cpaluszek/gh-ci/ui/context"
 )
 
 func FormatTime(t time.Time) string {

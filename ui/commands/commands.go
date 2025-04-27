@@ -7,8 +7,8 @@ import (
 	"runtime"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/cpaluszek/gh-actions/config"
-	"github.com/cpaluszek/gh-actions/github"
+	"github.com/cpaluszek/gh-ci/config"
+	"github.com/cpaluszek/gh-ci/github"
 )
 
 type ClientInitMsg struct {

@@ -1,9 +1,9 @@
 package context
 
 import (
-	"github.com/cpaluszek/gh-actions/config"
-	"github.com/cpaluszek/gh-actions/github"
-	"github.com/cpaluszek/gh-actions/ui/styles"
+	"github.com/cpaluszek/gh-ci/config"
+	"github.com/cpaluszek/gh-ci/github"
+	"github.com/cpaluszek/gh-ci/ui/styles"
 )
 
 type ViewType string

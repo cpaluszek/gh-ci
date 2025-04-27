@@ -1,4 +1,4 @@
-# gh-actions
+# gh-ci
 
 A terminal UI application for monitoring your GitHub Actions workflows and runs.
 
@@ -12,7 +12,7 @@ A terminal UI application for monitoring your GitHub Actions workflows and runs.
 ## Requirements
 
 ### Fonts
-gh-actions uses Nerd Font icons for workflow and job status indicators. For the best experience:
+gh-ci uses Nerd Font icons for workflow and job status indicators. For the best experience:
 
 1. Install a [Nerd Font](https://www.nerdfonts.com/font-downloads) compatible font of your choice
 2. Configure your terminal to use the installed Nerd Font
@@ -25,7 +25,7 @@ Without a Nerd Font, the status icons will appear as placeholder characters or m
 2. Install this extension:
 
 ```bash
-gh extension install gh-actions
+gh extension install gh-ci
 ```
 
 ## Configuration
@@ -41,7 +41,7 @@ github:
 ## Usage
 
 ```bash
-gh actions
+gh ci
 ```
 
 ### Navigation
@@ -65,7 +65,7 @@ gh actions
 
 ## Development
 
-gh-actions is built with:
+gh-ci is built with:
 
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea): Terminal UI framework
 - [Lipgloss](https://github.com/charmbracelet/lipgloss): Style definitions for terminal applications

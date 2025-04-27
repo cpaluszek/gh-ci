@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/cpaluszek/gh-actions/ui/context"
+	"github.com/cpaluszek/gh-ci/ui/context"
 )
 
 func GetRunEventSymbol(ctx *context.Context, event string) string {

@@ -1,4 +1,4 @@
-module github.com/cpaluszek/gh-actions
+module github.com/cpaluszek/gh-ci
 
 go 1.24.2
 

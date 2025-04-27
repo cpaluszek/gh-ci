@@ -6,9 +6,9 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/cpaluszek/gh-actions/ui/components/listviewport"
-	"github.com/cpaluszek/gh-actions/ui/constants"
-	"github.com/cpaluszek/gh-actions/ui/context"
+	"github.com/cpaluszek/gh-ci/ui/components/listviewport"
+	"github.com/cpaluszek/gh-ci/ui/constants"
+	"github.com/cpaluszek/gh-ci/ui/context"
 )
 
 type Model struct {

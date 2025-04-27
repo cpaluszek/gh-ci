@@ -4,8 +4,8 @@ import (
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/cpaluszek/gh-actions/config"
-	"github.com/cpaluszek/gh-actions/ui"
+	"github.com/cpaluszek/gh-ci/config"
+	"github.com/cpaluszek/gh-ci/ui"
 )
 
 func Execute() {
