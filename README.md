@@ -2,6 +2,8 @@
 
 A terminal UI application for monitoring your GitHub Actions workflows and runs.
 
+![Demo GIF](./assets/demo.gif)
+
 ## Features
 
 - 🔍 Browse your GitHub repositories with Actions workflows
@@ -73,6 +75,7 @@ gh-ci is built with:
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea): Terminal UI framework
 - [Lipgloss](https://github.com/charmbracelet/lipgloss): Style definitions for terminal applications
 - [go-gh](https://github.com/cli/go-gh): Go library for the GitHub CLI
+- [vhs](https://github.com/charmbracelet/vhs): Gif generation
 
 ## Credits
 
