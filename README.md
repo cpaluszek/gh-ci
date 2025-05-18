@@ -49,24 +49,7 @@ github:
 gh ci
 ```
 
-### Navigation
-
-- **Repository List:**
-  - `↑`/`k`, `↓`/`j`: Navigate through repositories
-  - `Enter`: Select repository and view its workflows
-  - `o`: Open selected repository in browser
-  - `q`: Quit
-
-- **Workflow View:**
-  - `↑`/`k`, `↓`/`j`: Navigate through workflow runs
-  - `Enter`: Select run and view jobs 
-  - `o`: Open selected workflow run in browser
-  - `Esc`/`Backspace`: Return to repository list
-
-- **Workflow View:**
-  - `↑`/`k`, `↓`/`j`: Navigate through workflow runs
-  - `o`: Open selected workflow run in browser
-  - `Esc`/`Backspace`: Return to workflow list
+Then press `?` for help.
 
 ## Development
 
