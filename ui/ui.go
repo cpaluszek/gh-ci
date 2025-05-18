@@ -4,6 +4,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cpaluszek/gh-ci/config"
@@ -14,6 +15,7 @@ import (
 	"github.com/cpaluszek/gh-ci/ui/components/sidebar"
 	"github.com/cpaluszek/gh-ci/ui/constants"
 	"github.com/cpaluszek/gh-ci/ui/context"
+	"github.com/cpaluszek/gh-ci/ui/keys"
 	"github.com/cpaluszek/gh-ci/ui/runsection"
 	"github.com/cpaluszek/gh-ci/ui/section"
 	"github.com/cpaluszek/gh-ci/ui/styles"
@@ -66,17 +68,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
+		switch {
+		case key.Matches(msg, keys.Keys.Quit):
 			m.footer, cmd = m.footer.Update(msg)
 			return m, cmd
-		case "j", "down":
+		case key.Matches(msg, keys.Keys.Down):
 			m.GetCurrentSection().NextRow()
 			m.OnSelectedRowChanged()
-		case "k", "up":
+		case key.Matches(msg, keys.Keys.Up):
 			m.GetCurrentSection().PrevRow()
 			m.OnSelectedRowChanged()
-		case "enter":
+		case key.Matches(msg, keys.Keys.Select):
 			switch m.ctx.View {
 			case context.RepoView:
 				repo := m.repos.GetCurrentRow()
@@ -88,7 +90,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.View = context.RunView
 				return m, commands.GoToRun(workflowRun)
 			}
-		case "esc", "backspace":
+		case key.Matches(msg, keys.Keys.Return):
 			switch m.ctx.View {
 			case context.WorkflowView:
 				m.ctx.View = context.RepoView
@@ -97,7 +99,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.View = context.WorkflowView
 				m.OnSelectedRowChanged()
 			}
-
+		case key.Matches(msg, keys.Keys.Help):
+			if m.footer.Help.ShowAll {
+				m.ctx.MainContentHeight = m.ctx.MainContentHeight + constants.HelpHeight - constants.FooterHeight
+			} else {
+				m.ctx.MainContentHeight = m.ctx.MainContentHeight + constants.FooterHeight - constants.HelpHeight
+			}
 		}
 	case commands.ClientInitMsg:
 		m.ctx.Client = msg.Client
@@ -148,12 +155,10 @@ func (m Model) View() string {
 }
 
 func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
-	footerHeight := 1
-	headerHeight := 1
 	m.ctx.ScreenWidth = msg.Width
 	m.ctx.ScreenHeight = msg.Height
 	m.ctx.MainContentWidth = msg.Width - constants.SideBarWidth
-	m.ctx.MainContentHeight = msg.Height - footerHeight - headerHeight
+	m.ctx.MainContentHeight = msg.Height - constants.FooterHeight - constants.HeaderHeight
 	m.footer.SetWidth(msg.Width)
 }
 

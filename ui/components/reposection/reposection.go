@@ -3,12 +3,14 @@ package reposection
 import (
 	"fmt"
 
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cpaluszek/gh-ci/github"
 	"github.com/cpaluszek/gh-ci/ui/commands"
 	"github.com/cpaluszek/gh-ci/ui/components/table"
 	"github.com/cpaluszek/gh-ci/ui/constants"
 	"github.com/cpaluszek/gh-ci/ui/context"
+	"github.com/cpaluszek/gh-ci/ui/keys"
 	"github.com/cpaluszek/gh-ci/ui/section"
 )
 
@@ -67,8 +69,8 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		cmds = append(cmds, commands.SectionChanged)
 
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "o":
+		switch  {
+		case key.Matches(msg, keys.Keys.OpenGitHub):
 			if m.repos == nil {
 				return m, nil
 			}

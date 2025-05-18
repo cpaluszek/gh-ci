@@ -1,12 +1,14 @@
 package styles
 
 import "github.com/charmbracelet/lipgloss"
+import bbhelp "github.com/charmbracelet/bubbles/help"
 
 type Styles struct {
 	Header           lipgloss.Style
 	Title            lipgloss.Style
 	Error            lipgloss.Style
-	StatusBar        lipgloss.Style
+	Footer        lipgloss.Style
+    Help            bbhelp.Styles
 	Spinner          lipgloss.Style
 	Row              lipgloss.Style
 	TableHeader      lipgloss.Style
@@ -45,9 +47,20 @@ func BuildStyles(theme Theme) Styles {
 		Foreground(theme.Colors.Error).
 		Bold(true)
 
-	s.StatusBar = lipgloss.NewStyle().
-		Background(theme.Colors.SelectedBackground).
-		Padding(0, 1)
+    helpText := lipgloss.NewStyle()
+    helpKeyText := lipgloss.NewStyle()
+	s.Help = bbhelp.Styles{
+		ShortDesc:      helpText.Foreground(theme.Colors.Faint),
+		FullDesc:       helpText.Foreground(theme.Colors.Faint),
+		ShortSeparator: helpText.Foreground(theme.Colors.SecondaryBorder),
+		FullSeparator:  helpText.Foreground(theme.Colors.SecondaryBorder),
+		FullKey:        helpKeyText,
+		ShortKey:       helpKeyText,
+		Ellipsis:       helpText,
+	}
+	s.Footer = lipgloss.NewStyle().Padding(0, 1).
+		Border(lipgloss.NormalBorder()).BorderForeground(theme.Colors.PrimaryBorder).
+		BorderBottom(false).BorderTop(true).BorderLeft(false).BorderRight(false)
 
 	s.Spinner = lipgloss.NewStyle().Bold(true).Padding(0, 1)
 
