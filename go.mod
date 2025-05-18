@@ -1,6 +1,6 @@
 module github.com/cpaluszek/gh-ci
 
-go 1.24.2
+go 1.24.3
 
 require (
 	github.com/charmbracelet/bubbles v0.21.0
@@ -8,6 +8,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250319133953-166f707985bc
 	github.com/cli/go-gh/v2 v2.12.0
 	github.com/spf13/viper v1.20.1
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -45,5 +46,4 @@ require (
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/term v0.30.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
