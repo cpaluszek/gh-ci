@@ -44,6 +44,7 @@ type Model struct {
 	logHeight    int
 	inLogMode    bool
 	ready        bool
+	error        string
 }
 
 var (
@@ -155,6 +156,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		cmds = append(cmds, commands.SectionChanged)
 		err := m.updateLogger()
 		if err != nil {
+			m.error = err.Error()
 			return m, tea.Batch(cmds...)
 		}
 		m.updateViewportContent()
@@ -301,8 +303,32 @@ func (m Model) View() string {
 }
 
 func (m Model) renderHeaderView() string {
-	title := m.Ctx.Styles.Header.Render(fmt.Sprintf(" Workflow Steps%s", strings.Repeat(" ", m.Ctx.MainContentWidth-lipgloss.Width(" Workflow Steps"))))
-	return title
+	title := " Workflow Steps"
+
+	// Calculate error count
+	errorCount := 0
+	for _, step := range m.steps {
+		if step.Status == "failure" {
+			errorCount++
+		}
+	}
+
+	errorDisplay := ""
+	if errorCount > 0 {
+		errorDisplay = lipgloss.NewStyle().Foreground(errorColor).Render(fmt.Sprintf("Errors: %d", errorCount))
+	}
+
+	// Calculate remaining width for padding
+	// Total width - width of "Workflow Steps" - width of errorDisplay (if present)
+	remainingWidth := m.Ctx.MainContentWidth - lipgloss.Width(title)
+	if errorDisplay != "" {
+		remainingWidth -= lipgloss.Width(errorDisplay)
+	}
+
+	// Ensure padding is not negative
+	padding := max(0, remainingWidth)
+
+	return m.Ctx.Styles.Header.Render(fmt.Sprintf("%s%s%s", title, strings.Repeat(" ", padding), errorDisplay))
 }
 
 func (m *Model) updateLogViewportContent() {
@@ -340,7 +366,12 @@ func (m *Model) updateViewportContent() {
 	expandedStepRenderedHeight := 0
 
 	if len(m.steps) == 0 {
-		noDataText := "No Data"
+		noDataText := ""
+		if m.error != "" {
+			noDataText = m.error
+		} else {
+			noDataText = "No data found"
+		}
 		noDataStyle := lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#ff6b6b")).
 			Align(lipgloss.Center).
