@@ -12,6 +12,8 @@ const (
 	RepoView     ViewType = "repo"
 	WorkflowView ViewType = "workflow"
 	RunView      ViewType = "run"
+	LogStepView  ViewType = "step"
+	LogView      ViewType = "log"
 )
 
 type Context struct {
