@@ -31,6 +31,10 @@ type WorkflowRunMsg struct {
 	RunWithJobs *github.WorkflowRun
 }
 
+type GotostepMsg struct {
+	RunWithJobs *github.Job
+}
+
 type SectionChangedMsg struct{}
 
 type ErrorMsg struct {
@@ -64,6 +68,20 @@ func FetchRepositories(client *github.Client, names []string) tea.Cmd {
 		}
 		return RepositoriesMsg{
 			Repositories: repos,
+		}
+	}
+}
+
+func GoToStep(row github.RowData) tea.Cmd {
+	return func() tea.Msg {
+		runWithJobs, ok := row.(*github.Job)
+		if !ok {
+			return ErrorMsg{
+				Error: fmt.Errorf("selected row is not a workflow"),
+			}
+		}
+		return GotostepMsg{
+			RunWithJobs: runWithJobs,
 		}
 	}
 }

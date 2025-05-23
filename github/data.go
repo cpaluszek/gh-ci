@@ -62,11 +62,13 @@ type Job struct {
 
 // Step represents a step in a workflow job
 type Step struct {
-	Name       string `json:"name"`
-	Status     string `json:"status"`
-	Conclusion string `json:"conclusion"`
-	Number     int    `json:"number"`
-	Completed  bool   `json:"completed"`
+	Name        string    `json:"name"`
+	Status      string    `json:"status"`
+	Conclusion  string    `json:"conclusion"`
+	Number      int       `json:"number"`
+	Completed   bool      `json:"completed"`
+	StartedAt   time.Time `json:"started_at"`
+	CompletedAt time.Time `json:"completed_at"`
 }
 
 type RowData interface {
