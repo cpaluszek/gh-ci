@@ -1,4 +1,4 @@
-package workstepflowssection
+package stepsection
 
 import (
 	"fmt"

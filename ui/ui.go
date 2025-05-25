@@ -18,9 +18,9 @@ import (
 	"github.com/cpaluszek/gh-ci/ui/keys"
 	"github.com/cpaluszek/gh-ci/ui/runsection"
 	"github.com/cpaluszek/gh-ci/ui/section"
+	"github.com/cpaluszek/gh-ci/ui/stepsection"
 	"github.com/cpaluszek/gh-ci/ui/styles"
 	"github.com/cpaluszek/gh-ci/ui/workflowssection"
-	"github.com/cpaluszek/gh-ci/ui/workstepflowssection"
 )
 
 type Model struct {
@@ -52,7 +52,7 @@ func NewModel(cfg *config.Config) Model {
 	m.repos = &s
 	w := workflowssection.NewModel(m.ctx)
 	m.worflows = &w
-	step := workstepflowssection.NewModel(m.ctx)
+	step := stepsection.NewModel(m.ctx)
 	m.step = &step
 	r := runsection.NewModel(m.ctx)
 	m.run = &r
