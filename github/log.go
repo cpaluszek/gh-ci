@@ -202,11 +202,6 @@ func ParseZipLogs(zipData []byte, stepMeta map[int]Step, jobName string) ([]Step
 		if err != nil {
 			continue
 		}
-		err = rc.Close()
-		if err != nil {
-			continue
-		}
-
 		scanner := bufio.NewScanner(rc)
 		var logs []LogEntry
 
@@ -233,6 +228,11 @@ func ParseZipLogs(zipData []byte, stepMeta map[int]Step, jobName string) ([]Step
 				Level:     level,
 				Message:   line,
 			})
+		}
+
+		err = rc.Close()
+		if err != nil {
+			continue
 		}
 
 		meta := stepMeta[stepNumber]
