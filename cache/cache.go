@@ -45,7 +45,9 @@ func LoadCache() (*Cache, error) {
 
 	cacheFile := filepath.Join(cacheDir, "cache.json")
 	if data, err := os.ReadFile(cacheFile); err == nil {
-		json.Unmarshal(data, &c.entries)
+		if err := json.Unmarshal(data, &c.entries); err != nil {
+			return nil, fmt.Errorf("error loading cache: %w", err)
+		}
 	}
 
 	return c, nil
@@ -61,7 +63,9 @@ func (c *Cache) Get(key string) (any, bool) {
 
 	if time.Since(entry.Timestamp) > entry.TTL {
 		delete(c.entries, hashedKey)
-		c.save()
+		if err := c.save(); err != nil {
+			fmt.Printf("error saving cache after TTL expiration: %v\n", err)
+		}
 		return nil, false
 	}
 
@@ -80,10 +84,10 @@ func (c *Cache) Set(key string, data any, ttl time.Duration) error {
 	return c.save()
 }
 
-func (c *Cache) Delete(key string) {
+func (c *Cache) Delete(key string) error {
 	hashedKey := c.hashKey(key)
 	delete(c.entries, hashedKey)
-	c.save()
+	return c.save()
 }
 
 func (c *Cache) Clear() error {
@@ -113,8 +117,12 @@ func (c *Cache) GetFileCache(key string) (string, bool) {
 	if entry, exists := c.entries[hashedKey]; exists {
 		if time.Since(entry.Timestamp) > entry.TTL {
 			delete(c.entries, hashedKey)
-			os.Remove(filePath)
-			c.save()
+			if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+				fmt.Printf("error removing expired cache file %s: %v\n", filePath, err)
+			}
+			if err := c.save(); err != nil {
+				fmt.Printf("error saving cache after file TTL expiration: %v\n", err)
+			}
 			return "", false
 		}
 

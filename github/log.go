@@ -118,7 +118,12 @@ func (c *Client) GetLogs(user, repo, runID, attempt string, jobName string) ([]S
 		if err != nil {
 			return nil, fmt.Errorf("failed to cache zip file: %v", err)
 		}
-		defer os.Remove(zipPath)
+		defer func() {
+			removeErr := os.Remove(zipPath)
+			if removeErr == nil {
+				err = removeErr
+			}
+		}()
 	} else {
 		log.Printf("Using cached zip file: %s\n", zipPath)
 		zipData, err = os.ReadFile(zipPath)
@@ -197,8 +202,10 @@ func ParseZipLogs(zipData []byte, stepMeta map[int]Step, jobName string) ([]Step
 		if err != nil {
 			continue
 		}
-		defer rc.Close()
-		defer os.Remove(file.Name)
+		err = rc.Close()
+		if err != nil {
+			continue
+		}
 
 		scanner := bufio.NewScanner(rc)
 		var logs []LogEntry
