@@ -31,7 +31,6 @@ type Model struct {
 	run      section.Section
 	step     section.Section
 	sidebar  sidebar.Model
-	stepView bool
 }
 
 func NewModel(cfg *config.Config) Model {
@@ -45,7 +44,6 @@ func NewModel(cfg *config.Config) Model {
 			Theme:        theme,
 			Styles:       &styles,
 		},
-		stepView: false,
 	}
 	f := footer.NewModel(m.ctx)
 	m.footer = f
@@ -79,15 +77,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.footer, cmd = m.footer.Update(msg)
 			return m, cmd
 		case key.Matches(msg, keys.Keys.Down):
-			if !m.stepView {
-				m.GetCurrentSection().NextRow()
-				m.OnSelectedRowChanged()
-			}
+			m.GetCurrentSection().NextRow()
+			m.OnSelectedRowChanged()
 		case key.Matches(msg, keys.Keys.Up):
-			if !m.stepView {
-				m.GetCurrentSection().PrevRow()
-				m.OnSelectedRowChanged()
-			}
+			m.GetCurrentSection().PrevRow()
+			m.OnSelectedRowChanged()
 		case key.Matches(msg, keys.Keys.Select):
 			switch m.ctx.View {
 			case context.RepoView:
@@ -102,7 +96,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case context.RunView:
 				repo := m.run.GetCurrentRow()
 				m.ctx.View = context.LogStepView
-				m.stepView = true
 				return m, commands.GoToStep(repo)
 			}
 		case key.Matches(msg, keys.Keys.Return):
@@ -115,7 +108,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.OnSelectedRowChanged()
 			case context.LogStepView:
 				m.ctx.View = context.RunView
-				m.stepView = false
 				m.OnSelectedRowChanged()
 			}
 		case key.Matches(msg, keys.Keys.Help):

@@ -4,9 +4,9 @@ import (
 	"archive/zip"
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -41,22 +41,8 @@ type GitHubRunInfo struct {
 	JobID string `json:"job_id,omitempty"`
 }
 
-type GitHubStep struct {
-	Name        string    `json:"name"`
-	Status      string    `json:"status"`
-	Conclusion  string    `json:"conclusion"`
-	Number      int       `json:"number"`
-	StartedAt   time.Time `json:"started_at"`
-	CompletedAt time.Time `json:"completed_at"`
-}
-
-type GitHubJob struct {
-	Name  string       `json:"name"`
-	Steps []GitHubStep `json:"steps"`
-}
-
 type GitHubJobsResponse struct {
-	Jobs []GitHubJob `json:"jobs"`
+	Jobs []Job `json:"jobs"`
 }
 
 var (
@@ -88,57 +74,53 @@ func ParseGitHubURL(rawURL string) (*GitHubRunInfo, error) {
 	return info, nil
 }
 
-func GetLogs(user, repo, runID, attempt string, jobName string) ([]Steplog, error) {
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		return nil, fmt.Errorf("GITHUB_TOKEN not set")
-	}
-
+func (c *Client) GetLogs(user, repo, runID, attempt string, jobName string) ([]Steplog, error) {
 	cacheKey := fmt.Sprintf("logs:%s:%s:%s:%s:%s", user, repo, runID, attempt, jobName)
-	c, err := cache.LoadCache()
+	cache, err := cache.LoadCache()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load cache: %v", err)
 	}
 
-	if cachedData, found := c.Get(cacheKey); found {
+	if cachedData, found := cache.Get(cacheKey); found {
 		if steplogs, ok := cachedData.([]Steplog); ok {
 			return steplogs, nil
 		}
 	}
 
 	zipCacheKey := fmt.Sprintf("logs:%s:%s:%s:%s", user, repo, runID, attempt)
-	zipPath, foundFile := c.GetFileCache(zipCacheKey)
+	zipPath, foundFile := cache.GetFileCache(zipCacheKey)
 	var zipData []byte
 
 	if !foundFile {
 		logsURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/actions/runs/%s/attempts/%s/logs", user, repo, runID, attempt)
-		req, err := http.NewRequest("GET", logsURL, nil)
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Accept", "application/vnd.github.v3+json")
-		req.Header.Set("Authorization", "Bearer "+token)
 
-		client := &http.Client{}
-		resp, err := client.Do(req)
+		resp, err := c.Client.Request(http.MethodGet, logsURL, nil)
 		if err != nil {
+			log.Printf("failed to fetch logs: %v", err)
 			return nil, err
 		}
-		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
+			bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, 1024)) // Read up to 1KB for error logging
+			log.Printf("failed to download logs: status code %d from %s. Response: %s", resp.StatusCode, resp.Request.URL, string(bodyBytes))
+			return nil, fmt.Errorf("failed to download logs: status code %d from %s", resp.StatusCode, resp.Request.URL)
 		}
+
 		zipData, err = io.ReadAll(resp.Body)
 		if err != nil {
-			return nil, err
+			log.Printf("failed to read log response body: %v", err)
+			return nil, fmt.Errorf("failed to read log response body: %w", err)
 		}
-		zipPath, err = c.SetFileCache(zipCacheKey, zipData, time.Hour)
+		log.Printf("Fetched logs successfully, size: %d bytes\n", len(zipData))
+
+		// TODO: use .config file log TTL
+		zipPath, err = cache.SetFileCache(zipCacheKey, zipData, time.Hour)
 		if err != nil {
 			return nil, fmt.Errorf("failed to cache zip file: %v", err)
 		}
 		defer os.Remove(zipPath)
 	} else {
+		log.Printf("Using cached zip file: %s\n", zipPath)
 		zipData, err = os.ReadFile(zipPath)
 		if err != nil {
 			return nil, err
@@ -146,7 +128,7 @@ func GetLogs(user, repo, runID, attempt string, jobName string) ([]Steplog, erro
 	}
 
 	// fetch metadata for steps
-	stepMeta, err := FetchGitHubJobSteps(user, repo, runID, token, jobName)
+	stepMeta, err := c.FetchGitHubJobSteps(user, repo, runID, jobName)
 	if err != nil {
 		return nil, err
 	}
@@ -156,40 +138,24 @@ func GetLogs(user, repo, runID, attempt string, jobName string) ([]Steplog, erro
 		return nil, err
 	}
 
-	if err := c.Set(cacheKey, steplogs, 30*time.Minute); err != nil {
+	if err := cache.Set(cacheKey, steplogs, 30*time.Minute); err != nil {
 		fmt.Printf("Warning: failed to cache parsed logs: %v\n", err)
 	}
 
 	return steplogs, nil
 }
 
-func FetchGitHubJobSteps(owner, repo, runID, token, jobname string) (map[int]GitHubStep, error) {
+func (c *Client) FetchGitHubJobSteps(owner, repo, runID, jobname string) (map[int]Step, error) {
 	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/actions/runs/%s/jobs", owner, repo, runID)
-	req, err := http.NewRequest("GET", apiURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Accept", "application/vnd.github+json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("GitHub API error: %s", body)
-	}
 
 	var jobsResponse GitHubJobsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&jobsResponse); err != nil {
+
+	err := c.Client.Get(apiURL, &jobsResponse)
+	if err != nil {
 		return nil, err
 	}
 
-	stepMap := make(map[int]GitHubStep)
+	stepMap := make(map[int]Step)
 
 	for _, job := range jobsResponse.Jobs {
 		if job.Name == jobname {
@@ -203,7 +169,7 @@ func FetchGitHubJobSteps(owner, repo, runID, token, jobname string) (map[int]Git
 	return stepMap, nil
 }
 
-func ParseZipLogs(zipData []byte, stepMeta map[int]GitHubStep, jobName string) ([]Steplog, error) {
+func ParseZipLogs(zipData []byte, stepMeta map[int]Step, jobName string) ([]Steplog, error) {
 	reader, err := zip.NewReader(bytes.NewReader(zipData), int64(len(zipData)))
 	if err != nil {
 		return nil, err
@@ -232,7 +198,6 @@ func ParseZipLogs(zipData []byte, stepMeta map[int]GitHubStep, jobName string) (
 			continue
 		}
 		defer rc.Close()
-		// Delete the file after reading
 		defer os.Remove(file.Name)
 
 		scanner := bufio.NewScanner(rc)

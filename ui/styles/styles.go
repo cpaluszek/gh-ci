@@ -1,14 +1,16 @@
 package styles
 
-import "github.com/charmbracelet/lipgloss"
-import bbhelp "github.com/charmbracelet/bubbles/help"
+import (
+	bbhelp "github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/lipgloss"
+)
 
 type Styles struct {
 	Header           lipgloss.Style
 	Title            lipgloss.Style
 	Error            lipgloss.Style
-	Footer        lipgloss.Style
-    Help            bbhelp.Styles
+	Footer           lipgloss.Style
+	Help             bbhelp.Styles
 	Spinner          lipgloss.Style
 	Row              lipgloss.Style
 	TableHeader      lipgloss.Style
@@ -16,6 +18,8 @@ type Styles struct {
 	SectionContainer lipgloss.Style
 	SideBar          lipgloss.Style
 	Success          lipgloss.Style
+	Warning          lipgloss.Style
+	Info             lipgloss.Style
 	Failure          lipgloss.Style
 	Canceled         lipgloss.Style
 	InProgress       lipgloss.Style
@@ -47,8 +51,8 @@ func BuildStyles(theme Theme) Styles {
 		Foreground(theme.Colors.Error).
 		Bold(true)
 
-    helpText := lipgloss.NewStyle()
-    helpKeyText := lipgloss.NewStyle()
+	helpText := lipgloss.NewStyle()
+	helpKeyText := lipgloss.NewStyle()
 	s.Help = bbhelp.Styles{
 		ShortDesc:      helpText.Foreground(theme.Colors.Faint),
 		FullDesc:       helpText.Foreground(theme.Colors.Faint),
@@ -82,6 +86,10 @@ func BuildStyles(theme Theme) Styles {
 		BorderRight(false)
 
 	s.Success = lipgloss.NewStyle().Foreground(theme.Colors.Success)
+
+	s.Warning = lipgloss.NewStyle().Foreground(theme.Colors.Warning)
+
+	s.Info = lipgloss.NewStyle().Foreground(theme.Colors.Info)
 
 	s.Failure = lipgloss.NewStyle().Foreground(theme.Colors.Error)
 

@@ -2,6 +2,7 @@ package keys
 
 import "github.com/charmbracelet/bubbles/key"
 
+// TODO: implement refresh on all sections
 type KeyMap struct {
 	Up         key.Binding
 	Down       key.Binding

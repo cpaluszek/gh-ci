@@ -8,10 +8,10 @@ type Theme struct {
 }
 
 type Colors struct {
-	Primary, Secondary, Faint                  lipgloss.AdaptiveColor
-	PrimaryBorder, SecondaryBorder             lipgloss.AdaptiveColor
-	SelectedBackground, SelectedText           lipgloss.AdaptiveColor
-	Success, Warning, Error, Progress, Skipped lipgloss.AdaptiveColor
+	Primary, Secondary, Faint                        lipgloss.AdaptiveColor
+	PrimaryBorder, SecondaryBorder                   lipgloss.AdaptiveColor
+	SelectedBackground, SelectedText                 lipgloss.AdaptiveColor
+	Success, Warning, Error, Info, Progress, Skipped lipgloss.AdaptiveColor
 	// Event colors
 	PullRequest, Push, Schedule, Play, Issue lipgloss.AdaptiveColor
 	Deployment, Tag, WebHook, Fork           lipgloss.AdaptiveColor
@@ -38,6 +38,7 @@ var DefaultTheme = &Theme{
 		Success:            lipgloss.AdaptiveColor{Light: "002", Dark: "002"},
 		Warning:            lipgloss.AdaptiveColor{Light: "003", Dark: "003"},
 		Error:              lipgloss.AdaptiveColor{Light: "001", Dark: "001"},
+		Info:               lipgloss.AdaptiveColor{Light: "004", Dark: "004"},
 		Progress:           lipgloss.AdaptiveColor{Light: "004", Dark: "004"},
 		Skipped:            lipgloss.AdaptiveColor{Light: "007", Dark: "007"},
 		PullRequest:        lipgloss.AdaptiveColor{Light: "004", Dark: "004"},
