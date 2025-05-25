@@ -17,7 +17,6 @@ import (
 	"github.com/cpaluszek/gh-ci/ui/section"
 )
 
-// TODO: fix loading
 // TODO: fix table scrolling while in log mode
 type Model struct {
 	section.BaseModel
@@ -83,24 +82,19 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	switch msg := msg.(type) {
 	case commands.GotostepMsg:
 		m.Job = msg.RunWithJobs
-		err := m.getLogs()
-		if err != nil {
-			m.error = err.Error()
-		} else {
-			m.Table.SetRows(m.BuildRows())
-			m.Table.FirstItem()
-		}
+		return m, tea.Batch(m.Fetch()...)
+
+	case commands.LogsMsg:
+		m.steps = msg.Steps
 		m.SetIsLoading(false)
+		m.Table.SetRows(m.BuildRows())
 		cmds = append(cmds, commands.SectionChanged)
 
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, keys.Keys.Refresh):
-			err := m.getLogs()
-			if err != nil {
-				m.error = err.Error()
-			} else {
-				m.Table.SetRows(m.BuildRows())
+			if !m.IsLoading {
+				return m, tea.Batch(m.Fetch()...)
 			}
 
 		case key.Matches(msg, keys.Keys.Select):
@@ -153,16 +147,6 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	}
 
 	return m, tea.Batch(cmds...)
-}
-
-func (m *Model) getLogs() error {
-	info, err := github.ParseGitHubURL(m.Job.GetURL())
-	if err != nil {
-		return err
-	}
-
-	m.steps, err = m.Ctx.Client.GetLogs(info.User, info.Repo, info.RunID, "1", m.Job.Name)
-	return err
 }
 
 func (m Model) BuildRows() []table.Row {
@@ -299,7 +283,17 @@ func (m *Model) UpdateContext(ctx *context.Context) {
 }
 
 func (m *Model) Fetch() []tea.Cmd {
-	return nil
+	if m == nil || m.Job == nil {
+		return nil
+	}
+
+	var cmds []tea.Cmd
+	tableCmd := m.Table.StartLoadingSpinner()
+	fetchCmd := commands.FetchStepLogs(m.Ctx.Client, m.Job)
+
+	cmds = append(cmds, tableCmd, fetchCmd)
+	m.SetIsLoading(true)
+	return cmds
 }
 
 func (m *Model) GetCurrentRow() github.RowData {
