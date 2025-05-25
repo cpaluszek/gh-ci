@@ -10,8 +10,6 @@ type KeyMap struct {
 	Quit       key.Binding
 	Return     key.Binding
 	OpenGitHub key.Binding
-	Tab        key.Binding
-	ShiftTab   key.Binding
 	Help       key.Binding
 	Refresh    key.Binding
 }
@@ -28,14 +26,6 @@ var Keys = &KeyMap{
 	Select: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("enter", "select"),
-	),
-	Tab: key.NewBinding(
-		key.WithKeys("tab"),
-		key.WithHelp("tab", "switch to table"),
-	),
-	ShiftTab: key.NewBinding(
-		key.WithKeys("shift+tab"),
-		key.WithHelp("shift+tab", "switch back table"),
 	),
 	Quit: key.NewBinding(
 		key.WithKeys("q", "ctrl+c"),
@@ -67,7 +57,6 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Up, k.Down, k.Select},
 		{k.OpenGitHub, k.Return},
-		{k.Tab, k.ShiftTab},
 		{k.Refresh},
 		{k.Help, k.Quit},
 	}
