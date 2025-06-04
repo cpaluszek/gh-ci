@@ -108,7 +108,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.OnSelectedRowChanged()
 			case context.LogStepView:
 				m.ctx.View = context.RunView
-                m.ctx.MainContentWidth -= constants.SideBarWidth
+				m.ctx.MainContentWidth -= constants.SideBarWidth
 				m.OnSelectedRowChanged()
 			}
 		case key.Matches(msg, keys.Keys.Help):

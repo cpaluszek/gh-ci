@@ -17,19 +17,15 @@ import (
 	"github.com/cpaluszek/gh-ci/ui/section"
 )
 
-// TODO: fix table scrolling while in log mode
 type Model struct {
 	section.BaseModel
 	steps        []github.Steplog
 	expandedStep int
 	logViewport  viewport.Model
 	Job          *github.Job
-	logHeight    int
 	inLogMode    bool
 	error        string
 }
-
-var logHeight = 15
 
 func NewModel(ctx *context.Context) Model {
 	base := section.NewModel(
@@ -55,15 +51,14 @@ func NewModel(ctx *context.Context) Model {
 	)
 
 	logVp := viewport.New(
-		ctx.MainContentWidth-2,
-		logHeight,
+		ctx.MainContentWidth,
+        ctx.MainContentHeight - 2,
 	)
 
 	m := Model{
 		BaseModel:    base,
 		expandedStep: -1,
 		logViewport:  logVp,
-		logHeight:    logHeight,
 		inLogMode:    false,
 	}
 
@@ -98,18 +93,10 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				if m.expandedStep == currentIndex {
 					m.expandedStep = -1
 					m.inLogMode = false
-					m.Table.SetDimensions(m.GetDimensions())
-					m.Table.SyncViewPortContent()
 				} else {
 					m.expandedStep = currentIndex
 					m.inLogMode = true
 					m.updateLogViewportContent()
-					tableDim := constants.Dimensions{
-						Width:  m.Ctx.MainContentWidth,
-						Height: m.Ctx.MainContentHeight - logHeight - 2,
-					}
-					m.Table.SetDimensions(tableDim)
-					m.Table.SyncViewPortContent()
 				}
 			}
 
@@ -186,18 +173,11 @@ func (m Model) View() string {
 		return errorStyle.Render(m.error)
 	}
 
-	tableView := m.Table.View()
-
 	if m.expandedStep >= 0 && m.expandedStep < len(m.steps) {
-		logsView := m.renderExpandedStepLogs()
-		return lipgloss.JoinVertical(
-			lipgloss.Left,
-			tableView,
-			logsView,
-		)
+		return m.renderExpandedStepLogs()
 	}
 
-	return tableView
+	return m.Table.View()
 }
 
 func (m Model) renderExpandedStepLogs() string {
@@ -206,7 +186,7 @@ func (m Model) renderExpandedStepLogs() string {
 	}
 
 	step := m.steps[m.expandedStep]
-	title := fmt.Sprintf(" Logs for Step %d: %s", step.Number, step.Title)
+    title := fmt.Sprintf(" Step %s:", step.Title)
 
 	logsHeader := m.Ctx.Styles.Header.Render(title)
 	logsContent := m.logViewport.View()
@@ -273,7 +253,8 @@ func (m *Model) UpdateContext(ctx *context.Context) {
 	m.Table.SetDimensions(m.GetDimensions())
 	m.Table.SyncViewPortContent()
 
-	m.logViewport.Width = m.Ctx.MainContentWidth - 6
+	m.logViewport.Width = m.Ctx.MainContentWidth
+	m.logViewport.Height = m.Ctx.MainContentHeight - 2
 }
 
 func (m *Model) Fetch() []tea.Cmd {
@@ -292,8 +273,4 @@ func (m *Model) Fetch() []tea.Cmd {
 
 func (m *Model) GetCurrentRow() github.RowData {
 	return nil
-}
-
-func (m *Model) IsInLogMode() bool {
-	return m.inLogMode
 }
