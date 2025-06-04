@@ -88,7 +88,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				repo := m.repos.GetCurrentRow()
 				m.ctx.View = context.WorkflowView
 				return m, commands.GoToWorkflow(repo)
-
 			case context.WorkflowView:
 				workflowRun := m.worflows.GetCurrentRow()
 				m.ctx.View = context.RunView
@@ -96,6 +95,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case context.RunView:
 				repo := m.run.GetCurrentRow()
 				m.ctx.View = context.LogStepView
+                m.ctx.MainContentWidth += constants.SideBarWidth
 				return m, commands.GoToStep(repo)
 			}
 		case key.Matches(msg, keys.Keys.Return):
@@ -108,6 +108,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.OnSelectedRowChanged()
 			case context.LogStepView:
 				m.ctx.View = context.RunView
+                m.ctx.MainContentWidth -= constants.SideBarWidth
 				m.OnSelectedRowChanged()
 			}
 		case key.Matches(msg, keys.Keys.Help):
