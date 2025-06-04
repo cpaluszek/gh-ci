@@ -37,23 +37,18 @@ func NewModel(ctx *context.Context) Model {
 		"Workflow Steps",
 		[]table.Column{
 			{
-				Title: "#",
-				Width: 4,
-				Grow:  false,
-			},
-			{
 				Title: "Title",
 				Width: 40,
 				Grow:  true,
 			},
 			{
 				Title: "Status",
-				Width: 15,
+				Width: 18,
 				Grow:  false,
 			},
 			{
 				Title: "Duration",
-				Width: 15,
+				Width: 12,
 				Grow:  false,
 			},
 		},
@@ -153,7 +148,7 @@ func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
 
 	for _, step := range m.steps {
-		statusText := strings.ToUpper(step.Status)
+		statusText := step.Status
 		statusDisplay := statusText
 
 		switch step.Status {
@@ -170,7 +165,6 @@ func (m Model) BuildRows() []table.Row {
 		}
 
 		rows = append(rows, table.Row{
-			fmt.Sprintf("%d", step.Number),
 			step.Title,
 			statusDisplay,
 			step.Duration,
