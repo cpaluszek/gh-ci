@@ -11,13 +11,14 @@ import (
 	"github.com/cpaluszek/gh-ci/github"
 	"github.com/cpaluszek/gh-ci/ui/commands"
 	"github.com/cpaluszek/gh-ci/ui/components/footer"
-	"github.com/cpaluszek/gh-ci/ui/components/reposection"
 	"github.com/cpaluszek/gh-ci/ui/components/sidebar"
 	"github.com/cpaluszek/gh-ci/ui/constants"
 	"github.com/cpaluszek/gh-ci/ui/context"
 	"github.com/cpaluszek/gh-ci/ui/keys"
+	"github.com/cpaluszek/gh-ci/ui/reposection"
 	"github.com/cpaluszek/gh-ci/ui/runsection"
 	"github.com/cpaluszek/gh-ci/ui/section"
+	"github.com/cpaluszek/gh-ci/ui/stepsection"
 	"github.com/cpaluszek/gh-ci/ui/styles"
 	"github.com/cpaluszek/gh-ci/ui/workflowssection"
 )
@@ -28,6 +29,7 @@ type Model struct {
 	repos    section.Section
 	worflows section.Section
 	run      section.Section
+	step     section.Section
 	sidebar  sidebar.Model
 }
 
@@ -50,6 +52,8 @@ func NewModel(cfg *config.Config) Model {
 	m.repos = &s
 	w := workflowssection.NewModel(m.ctx)
 	m.worflows = &w
+	step := stepsection.NewModel(m.ctx)
+	m.step = &step
 	r := runsection.NewModel(m.ctx)
 	m.run = &r
 	sidebar := sidebar.NewModel(m.ctx)
@@ -84,11 +88,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				repo := m.repos.GetCurrentRow()
 				m.ctx.View = context.WorkflowView
 				return m, commands.GoToWorkflow(repo)
-
 			case context.WorkflowView:
 				workflowRun := m.worflows.GetCurrentRow()
 				m.ctx.View = context.RunView
 				return m, commands.GoToRun(workflowRun)
+			case context.RunView:
+				repo := m.run.GetCurrentRow()
+				m.ctx.View = context.LogStepView
+				m.ctx.MainContentWidth += constants.SideBarWidth
+				return m, commands.GoToStep(repo)
+			case context.LogStepView:
+				m.ctx.View = context.LogView
 			}
 		case key.Matches(msg, keys.Keys.Return):
 			switch m.ctx.View {
@@ -97,6 +107,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.OnSelectedRowChanged()
 			case context.RunView:
 				m.ctx.View = context.WorkflowView
+				m.OnSelectedRowChanged()
+			case context.LogStepView:
+				m.ctx.View = context.RunView
+				m.ctx.MainContentWidth -= constants.SideBarWidth
+				m.OnSelectedRowChanged()
+			case context.LogView:
+				m.ctx.View = context.LogStepView
 				m.OnSelectedRowChanged()
 			}
 		case key.Matches(msg, keys.Keys.Help):
@@ -173,8 +190,10 @@ func (m *Model) updateCurrentSection(msg tea.Msg) (cmd tea.Cmd) {
 	case context.RunView:
 		m.run.UpdateContext(m.ctx)
 		m.run, cmd = m.run.Update(msg)
+	case context.LogStepView, context.LogView:
+		m.step.UpdateContext(m.ctx)
+		m.step, cmd = m.step.Update(msg)
 	}
-
 	return cmd
 }
 
@@ -186,6 +205,8 @@ func (m *Model) GetCurrentSection() section.Section {
 		return m.worflows
 	case context.RunView:
 		return m.run
+	case context.LogStepView, context.LogView:
+		return m.step
 	}
 	return nil
 }

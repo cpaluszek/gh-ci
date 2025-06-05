@@ -31,6 +31,14 @@ type WorkflowRunMsg struct {
 	RunWithJobs *github.WorkflowRun
 }
 
+type LogsMsg struct {
+	Steps []github.Steplog
+}
+
+type GotostepMsg struct {
+	RunWithJobs *github.Job
+}
+
 type SectionChangedMsg struct{}
 
 type ErrorMsg struct {
@@ -64,6 +72,62 @@ func FetchRepositories(client *github.Client, names []string) tea.Cmd {
 		}
 		return RepositoriesMsg{
 			Repositories: repos,
+		}
+	}
+}
+
+func FetchStepLogs(client *github.Client, job *github.Job) tea.Cmd {
+	return func() tea.Msg {
+		if job == nil {
+			return ErrorMsg{
+				Error: fmt.Errorf("workflow run is nil"),
+			}
+		}
+		info, err := github.ParseGitHubURL(job.GetURL())
+		if err != nil {
+			return ErrorMsg{Error: err}
+		}
+		steps, err := client.GetLogs(info.User, info.Repo, info.RunID, "1", job.Name)
+		if err != nil {
+			return ErrorMsg{Error: err}
+		}
+		return LogsMsg{
+			Steps: steps,
+		}
+	}
+}
+
+func FetchLogs(client *github.Client, job *github.Job) tea.Cmd {
+	return func() tea.Msg {
+		if job == nil {
+			return ErrorMsg{
+				Error: fmt.Errorf("workflow run is nil"),
+			}
+		}
+		info, err := github.ParseGitHubURL(job.GetURL())
+		if err != nil {
+			return ErrorMsg{Error: err}
+		}
+		steps, err := client.GetLogs(info.User, info.Repo, info.RunID, "1", job.Name)
+		if err != nil {
+			return ErrorMsg{Error: err}
+		}
+		return LogsMsg{
+			Steps: steps,
+		}
+	}
+}
+
+func GoToStep(row github.RowData) tea.Cmd {
+	return func() tea.Msg {
+		runWithJobs, ok := row.(*github.Job)
+		if !ok {
+			return ErrorMsg{
+				Error: fmt.Errorf("selected row is not a workflow"),
+			}
+		}
+		return GotostepMsg{
+			RunWithJobs: runWithJobs,
 		}
 	}
 }
