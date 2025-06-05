@@ -95,8 +95,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case context.RunView:
 				repo := m.run.GetCurrentRow()
 				m.ctx.View = context.LogStepView
-                m.ctx.MainContentWidth += constants.SideBarWidth
+				m.ctx.MainContentWidth += constants.SideBarWidth
 				return m, commands.GoToStep(repo)
+			case context.LogStepView:
+				m.ctx.View = context.LogView
 			}
 		case key.Matches(msg, keys.Keys.Return):
 			switch m.ctx.View {
@@ -109,6 +111,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case context.LogStepView:
 				m.ctx.View = context.RunView
 				m.ctx.MainContentWidth -= constants.SideBarWidth
+				m.OnSelectedRowChanged()
+			case context.LogView:
+				m.ctx.View = context.LogStepView
 				m.OnSelectedRowChanged()
 			}
 		case key.Matches(msg, keys.Keys.Help):
@@ -185,7 +190,7 @@ func (m *Model) updateCurrentSection(msg tea.Msg) (cmd tea.Cmd) {
 	case context.RunView:
 		m.run.UpdateContext(m.ctx)
 		m.run, cmd = m.run.Update(msg)
-	case context.LogStepView:
+	case context.LogStepView, context.LogView:
 		m.step.UpdateContext(m.ctx)
 		m.step, cmd = m.step.Update(msg)
 	}
@@ -200,7 +205,7 @@ func (m *Model) GetCurrentSection() section.Section {
 		return m.worflows
 	case context.RunView:
 		return m.run
-	case context.LogStepView:
+	case context.LogStepView, context.LogView:
 		return m.step
 	}
 	return nil

@@ -2,7 +2,6 @@ package keys
 
 import "github.com/charmbracelet/bubbles/key"
 
-// TODO: implement refresh on all sections
 type KeyMap struct {
 	Up         key.Binding
 	Down       key.Binding
@@ -11,7 +10,6 @@ type KeyMap struct {
 	Return     key.Binding
 	OpenGitHub key.Binding
 	Help       key.Binding
-	Refresh    key.Binding
 }
 
 var Keys = &KeyMap{
@@ -35,10 +33,6 @@ var Keys = &KeyMap{
 		key.WithKeys("esc", "backspace"),
 		key.WithHelp("esc", "return"),
 	),
-	Refresh: key.NewBinding(
-		key.WithKeys("r"),
-		key.WithHelp("r", "refresh"),
-	),
 	OpenGitHub: key.NewBinding(
 		key.WithKeys("o"),
 		key.WithHelp("o", "open in GitHub"),
@@ -57,7 +51,6 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Up, k.Down, k.Select},
 		{k.OpenGitHub, k.Return},
-		{k.Refresh},
 		{k.Help, k.Quit},
 	}
 }

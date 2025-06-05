@@ -52,7 +52,7 @@ func NewModel(ctx *context.Context) Model {
 
 	logVp := viewport.New(
 		ctx.MainContentWidth,
-        ctx.MainContentHeight - 2,
+		ctx.MainContentHeight-2,
 	)
 
 	m := Model{
@@ -72,6 +72,8 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	switch msg := msg.(type) {
 	case commands.GotostepMsg:
 		m.Job = msg.RunWithJobs
+		m.expandedStep = -1
+		m.inLogMode = false
 		return m, tea.Batch(m.Fetch()...)
 
 	case commands.LogsMsg:
@@ -82,23 +84,17 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, keys.Keys.Refresh):
-			if !m.IsLoading {
-				return m, tea.Batch(m.Fetch()...)
-			}
-
 		case key.Matches(msg, keys.Keys.Select):
 			currentIndex := m.Table.GetCurrItem()
-			if currentIndex >= 0 && currentIndex < len(m.steps) {
-				if m.expandedStep == currentIndex {
-					m.expandedStep = -1
-					m.inLogMode = false
-				} else {
-					m.expandedStep = currentIndex
-					m.inLogMode = true
-					m.updateLogViewportContent()
-				}
+			if !m.inLogMode && currentIndex >= 0 && currentIndex < len(m.steps) {
+				m.expandedStep = currentIndex
+				m.inLogMode = true
+				m.updateLogViewportContent()
 			}
+
+		case key.Matches(msg, keys.Keys.Return):
+			m.expandedStep = -1
+			m.inLogMode = false
 
 		case key.Matches(msg, keys.Keys.Up) || key.Matches(msg, keys.Keys.Down):
 			if m.inLogMode {
@@ -115,17 +111,15 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 	}
 
-	if m.inLogMode && cmd == nil {
+	if m.inLogMode {
 		m.logViewport, cmd = m.logViewport.Update(msg)
+		cmds = append(cmds, cmd)
+	} else {
+		table, cmd := m.Table.Update(msg)
+		m.Table = table
 		if cmd != nil {
 			cmds = append(cmds, cmd)
 		}
-	}
-
-	table, cmd := m.Table.Update(msg)
-	m.Table = table
-	if cmd != nil {
-		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)
@@ -186,7 +180,7 @@ func (m Model) renderExpandedStepLogs() string {
 	}
 
 	step := m.steps[m.expandedStep]
-    title := fmt.Sprintf(" Step %s:", step.Title)
+	title := fmt.Sprintf(" Step %s:", step.Title)
 
 	logsHeader := m.Ctx.Styles.Header.Render(title)
 	logsContent := m.logViewport.View()
@@ -272,5 +266,6 @@ func (m *Model) Fetch() []tea.Cmd {
 }
 
 func (m *Model) GetCurrentRow() github.RowData {
+	// TODO: implemement this method to return the current row data
 	return nil
 }
