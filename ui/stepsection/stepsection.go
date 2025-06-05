@@ -96,6 +96,17 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			m.expandedStep = -1
 			m.inLogMode = false
 
+		case key.Matches(msg, keys.Keys.OpenGitHub):
+            if m.Job == nil {
+                return m, nil
+            }
+
+            url := m.Job.URL
+            if url == "" {
+                return m, nil
+            }
+            return m, commands.OpenBrowser(url)
+
 		case key.Matches(msg, keys.Keys.Up) || key.Matches(msg, keys.Keys.Down):
 			if m.inLogMode {
 				m.logViewport, cmd = m.logViewport.Update(msg)
@@ -266,6 +277,5 @@ func (m *Model) Fetch() []tea.Cmd {
 }
 
 func (m *Model) GetCurrentRow() github.RowData {
-	// TODO: implemement this method to return the current row data
 	return nil
 }
