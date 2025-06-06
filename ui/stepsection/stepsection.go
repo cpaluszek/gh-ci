@@ -33,7 +33,7 @@ func NewModel(ctx *context.Context) Model {
 		"Workflow Steps",
 		[]table.Column{
 			{
-				Title: "Title",
+				Title: "Step",
 				Width: 40,
 				Grow:  true,
 			},

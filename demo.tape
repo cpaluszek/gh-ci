@@ -11,7 +11,7 @@ Set Framerate 30
 Set Padding 12
 
 Hide
-Type gh ci
+Type go run ./gh-ci.go
 Enter
 Sleep 3s
 Show
@@ -20,6 +20,8 @@ Sleep 1s
 Set TypingSpeed 400ms
 
 Type "j"
+Type "?"
+Sleep 1s
 Type "k"
 Sleep 1s
 Enter
@@ -37,4 +39,20 @@ Enter
 Type "j"
 Type "j"
 
-Sleep 3s
+Enter
+Type "j"
+Type "j"
+
+Sleep 2s
+Enter
+
+Type "j"
+Type "j"
+Type "j"
+Type "j"
+Sleep 1.5s
+Enter
+Type "j"
+Type "j"
+
+Sleep 4s
